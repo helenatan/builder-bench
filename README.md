@@ -12,6 +12,14 @@ a validated LLM judge, reported with **cost-per-solved-task** (the angle SWE-ben
 
 > Status: **M0** (scaffold + first end-to-end task). See [Roadmap](#roadmap).
 
+## Project docs
+
+The design lives in [`docs/`](docs/):
+
+- [`docs/PRD.md`](docs/PRD.md) — the full product requirements doc (motivation, categories, grading, models, milestones).
+- [`docs/BUILD-KICKOFF.md`](docs/BUILD-KICKOFF.md) — the M0 build brief this scaffold was built from.
+- [`docs/sample-tasks.md`](docs/sample-tasks.md) — two fully worked example tasks (C-01 and D-01).
+
 ---
 
 ## What's in M0
