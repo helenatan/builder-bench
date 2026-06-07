@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# OS
+.DS_Store
+
+# Held-out split — never commit (PRD §15, license model)
+private/*
+!private/.gitkeep
+
+# Run artifacts: keep the directory, ignore the (potentially large) logged transcripts.
+# Comment the next two lines if you want to commit a curated set of example runs.
+results/runs/*
+!results/runs/.gitkeep
+
+# Generated leaderboard is committed by default (it is small); flip if you prefer not to.
+# results/leaderboard.json

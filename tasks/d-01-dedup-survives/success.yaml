@@ -1,0 +1,25 @@
+id: d-01
+category: D            # Long-horizon coherence (D-lite: single session, programmatic)
+name: "Dedupe by company, not by location — survives later steps"
+derived_from: "PM-AI Hiring Index real dedup decision"
+needs_judge: false
+mode: multi_step
+
+# The agent sees these one at a time, in one continuous session.
+steps:
+  - prompt_step1.md
+  - prompt_step2.md
+  - prompt_step3.md
+  - prompt_step4.md
+
+grader: grader.py
+
+# Coherence is binary here: the early "dedupe by company+title" rule must still hold at step 4.
+pass_threshold: 1.0
+
+# Taxonomy tags this task is designed to surface when it fails.
+failure_tags_possible:
+  - vision-drift
+  - silent-assumptions
+  - data-blindness
+  - weak-self-verification

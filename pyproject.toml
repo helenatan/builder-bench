@@ -1,0 +1,25 @@
+[project]
+name = "builder-bench"
+version = "0.0.1"
+description = "An open-source agentic eval suite for the non-engineer 'builder' persona: idea -> working product."
+authors = [{ name = "Helena Tan" }]
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "claude-agent-sdk>=0.2.80",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+builder-bench = "harness.runner:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["harness", "harness.adapters"]
