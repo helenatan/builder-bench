@@ -1,0 +1,39 @@
+{
+  "rows": [
+    {
+      "task_id": "d-01",
+      "category": "D",
+      "model": "haiku-4.5",
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic",
+      "sandbox": "local",
+      "timestamp": "20260607-122719",
+      "attempts": 1,
+      "solved": 1,
+      "pass@1": 1.0,
+      "mean_score": 1.0,
+      "best_score": 1.0,
+      "total_cost_usd": 0.070421,
+      "cost_per_solved_usd": 0.070421,
+      "run_path": "results/runs/d-01/haiku-4.5/20260607-122719"
+    },
+    {
+      "task_id": "d-01",
+      "category": "D",
+      "model": "haiku-4.5",
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic",
+      "sandbox": "docker",
+      "timestamp": "20260607-125037",
+      "attempts": 1,
+      "solved": 1,
+      "pass@1": 1.0,
+      "mean_score": 1.0,
+      "best_score": 1.0,
+      "total_cost_usd": 0.076624,
+      "cost_per_solved_usd": 0.076624,
+      "run_path": "results/runs/d-01/haiku-4.5/20260607-125037"
+    }
+  ],
+  "generated_at": "2026-06-07T19:51:28.054374+00:00"
+}
