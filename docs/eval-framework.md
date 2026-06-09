@@ -8,34 +8,51 @@ Status: v1 working draft. Owner: Helena Tan.
 
 ---
 
-## Part 1 — The 6-part framework
+## Part 1 — The anatomy of an evaluation
 
-Every task, in every category, has the same six parts. The easiest way to hold them is to
-picture handing someone an assignment:
+The six parts aren't a flat list — they fall into **three layers**, and the layers form a
+pipeline. This matters: the parts live at different times and have different owners, so
+treating them as peers is what makes "is the Contestant part of a task?" feel ambiguous.
 
-> The **Contestant** sits down at a **Setup**, is given a **Goal**, and hands back
-> **Output** (a Deliverable + a Transcript), which we grade against an **Answer Key** and
-> roll up into a **Scorecard**.
+> **Task** (Setup · Goal · Answer Key) → run by a **Contestant** → produces **Output** →
+> scored by the Answer Key → rolled up into a **Scorecard**.
 
-| # | Part | Plain meaning | Role |
-|---|------|---------------|------|
-| 1 | **Setup** | what the agent starts with — the files, data, and tools already on the desk | can be the hard part |
-| 2 | **Goal** | what the agent is asked to achieve | can be the hard part |
-| 3 | **Contestant** | who's being tested: the model, run in the same neutral harness as everyone else so it's a fair race | the variable we **compare** |
-| 4 | **Output** | what it hands back — the finished work (**Deliverable**) and the record of how it got there (**Transcript**) | can be the hard part (which surface we grade) |
-| 5 | **Answer Key** | how we decide whether the work is any good, and how we check | can be the hard part |
-| 6 | **Scorecard** | the grades rolled up across many runs — how often it succeeded (pass@1/@3) and what each solve cost | held constant (the **measure**) |
+The three layers map directly onto the repo: `tasks/` → `results/runs/` → `leaderboard.json`.
 
-### Two parts are not category-defining
+### Layer 1 — The Task *(authored once, frozen)*
 
-- **Contestant** is the *thing we compare* — varied and ranked, not a property of the
-  task. In v1 it is a `(model, harness)` pair; the harness is held neutral so differences
-  trace to the model. (See the harness-as-second-factor extension in PRD §9.)
-- **Scorecard** is the *measure* — identical for everyone (pass@1/@3,
-  cost-per-solved-task, failure-mode tags).
+This *is* the task: the reusable, model-independent unit a contributor writes. Lives in `tasks/`.
 
-That leaves **Setup, Goal, Output, Answer Key** — the four parts that can be the *hard
-part* of a task. Categories are built from these.
+| Part | Plain meaning |
+|------|---------------|
+| **Setup** | what the agent starts with — the files, data, and tools already on the desk (`setup.sh` + `fixtures/`) |
+| **Goal** | what the agent is asked to achieve (the prompt or prompt-steps) |
+| **Answer Key** | what counts as correct, and how we check (`grader.py` + `expected/` + a hidden reference) |
+
+### Layer 2 — The Run *(one Contestant, one episode)*
+
+One attempt at the task. Logged under `results/runs/`.
+
+| Part | Plain meaning |
+|------|---------------|
+| **Contestant** | who's being tested: the model, run in the same neutral harness as everyone else so it's a fair race. In v1 a `(model, harness)` pair (see PRD §9) |
+| **Output** | what it hands back — the finished work (**Deliverable**) and the record of how it got there (**Transcript**) |
+
+The Answer Key (from Layer 1) is *applied* here to turn an Output into a score.
+
+### Layer 3 — The Report *(across many runs)*
+
+| Part | Plain meaning |
+|------|---------------|
+| **Scorecard** | the grades rolled up — pass@1/@3 and cost-per-solved-task, plus failure-mode tags. Ends up on the leaderboard |
+
+### Which parts can be the "hard part"
+
+Two of the six are never the source of a task's difficulty, because they aren't part of the
+task itself: the **Contestant** (the thing we vary and compare) and the **Scorecard** (how
+we measure, identical for everyone). The difficulty always sits in one of the other four —
+**Setup, Goal, Output, Answer Key** — and **a category is named for which one is the hard
+part** (Part 2).
 
 ### The Output has two surfaces
 

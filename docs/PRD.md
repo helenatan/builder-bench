@@ -58,20 +58,27 @@ No public benchmark measures this well. Building one demonstrates a thesis the C
 
 Four categories ship in v1, roughly 5 to 8 tasks each, 20 to 30 total. Each task is realistic, self-contained, and gradeable.
 
-### The six parts of a task
+### The anatomy of an evaluation
 
-Picture a task the way you'd picture handing someone an assignment. Six things are always in play:
+Picture handing someone an assignment, then grading a stack of them. The six parts fall into three layers, and the layers are a pipeline:
 
-| Part | Plain meaning |
-|------|---------------|
-| **Setup** | what the agent starts with — the files, data, and tools already on the desk |
-| **Goal** | what we ask it to achieve |
-| **Contestant** | who's being tested — the model, run in the same neutral harness as everyone else so it's a fair race |
-| **Output** | what it hands back: the finished work (the **Deliverable**) and the record of how it got there (the **Transcript**) |
-| **Answer Key** | how we decide whether the work is any good |
-| **Scorecard** | the grades rolled up across many runs — success rate and cost |
+> **Task** (Setup · Goal · Answer Key) → run by a **Contestant** → produces **Output** → scored by the Answer Key → rolled up into a **Scorecard**.
 
-Two of these never change between categories: *who* is tested (**Contestant**) and *how* we score (**Scorecard**). The other four — **Setup, Goal, Output, Answer Key** — are each a place where a task can be hard. **A category is named for which part is the hard part.** (Full detail in [`docs/eval-framework.md`](eval-framework.md).)
+**Task layer — the question** *(authored once, frozen; this is all a contributor writes)*
+- **Setup** — what the agent starts with: the files, data, and tools already on the desk.
+- **Goal** — what we ask it to achieve.
+- **Answer Key** — what counts as correct, and how we check.
+
+**Run layer — the attempt** *(one model, one episode)*
+- **Contestant** — who's being tested: the model, run in the same neutral harness as everyone else so it's a fair race.
+- **Output** — what it hands back: the finished work (the **Deliverable**) and the record of how it got there (the **Transcript**).
+
+**Report layer — the verdict** *(across many runs)*
+- **Scorecard** — the grades rolled up: success rate (pass@1/@3) and cost.
+
+The three layers map onto the repo itself: `tasks/` → `results/runs/` → the leaderboard. A **task** is exactly the Task layer; the Contestant, Output, and Scorecard live outside it.
+
+Two of the six are never the source of a task's difficulty, because they aren't part of the task: the **Contestant** (the model we're comparing) and the **Scorecard** (how we measure). The difficulty always sits in one of the other four — **Setup, Goal, Output, Answer Key** — and **a category is named for which one is the hard part.** (Full detail in [`docs/eval-framework.md`](eval-framework.md).)
 
 The **Goal** can be hard in two different ways — unclear *now*, or clear but easy to lose *over time* — so there are five categories in all; v1 ships four and previews the fifth. The letter codes (A–E) are stable task-id and leaderboard prefixes, *not* a running order, so the list below is sequenced for reading rather than alphabetically. Sub-type menus and seed tasks live in [`docs/task-backlog.md`](task-backlog.md).
 
@@ -195,7 +202,7 @@ A single pass over the PAI transcripts produces material for three deliverables 
 
 - **Runner:** headless agent execution through a **neutral harness**, so the thing under test is a `(model, harness)` pair held as comparable as possible across providers. The baseline harness is the **Claude Agent SDK** — a thin adapter layer swaps the underlying model (Anthropic, OpenAI, Google) behind identical scaffolding. A **second harness, the OpenAI Agents SDK**, is added as a deliberate *second factor* so we can measure the harness effect rather than assume it away. See the harness note below.
 - **Sandboxing:** each task runs in an isolated Docker container with a fixed starting state, so runs are reproducible and tasks cannot interfere.
-- **Task format:** each task is a folder containing a prompt, a setup script, fixtures/data, a success spec, and a grader. A README documents the schema so others can contribute tasks.
+- **Task format & definition:** a **task** is the reusable, model-independent unit of evaluation — a folder that freezes three of the six framework parts so any contestant can be run against it: the **Goal** (the prompt or prompt-steps), the **Setup** (`setup.sh` + `fixtures/`), and the **Answer Key** (`grader.py` + `expected/` + a hidden reference solution), bound by a `success.yaml` manifest. The other three parts live *outside* the task: the **Contestant** is supplied at run time (`--model`), the **Output** is produced into the run's workdir, and the **Scorecard** is aggregated across runs. One task → many **runs** (attempts); pass@k aggregates them, and labels for judge validation come from *runs*, not tasks (see §6). This is also why a task is not the same as a single "test case": a test case is one input→expected→grader row evaluated in one model call, whereas a task is an *environment* an agent works in across many turns, graded on its trajectory and end-state. The folder schema is documented in [`tasks/README.md`](../tasks/README.md) so others can contribute tasks.
 - **Models in v1 (one flagship + one budget tier per lab):** Each provider is run at two tiers so the suite can answer not just "which model is best" but "what do you give up by going cheaper, and is the cheap tier good enough for builder tasks?"
   - **Anthropic:** Claude **Opus 4.6** (flagship, primary system under test) and Claude **Haiku 4.5** (budget tier). Sonnet 4.6 is an optional mid-tier third point.
   - **OpenAI:** **GPT-5.5** (flagship agentic-coding model) and **GPT-5.4-mini** (budget tier). The coding-tuned GPT-5.3-Codex line is a documented alternative if a Codex-native comparison is preferred.
