@@ -10,31 +10,32 @@ Status: v1 working draft. Owner: Helena Tan.
 
 ## Part 1 — The 6-part framework
 
-Every task, in every category, decomposes into the same six parts. A task is:
+Every task, in every category, has the same six parts. The easiest way to hold them is to
+picture handing someone an assignment:
 
-> The **Contestant** wakes up in a **Setup**, is given a **Goal**, and produces
-> **Output** (a Deliverable + a Transcript), which we judge against an **Answer Key**
-> and tally into a **Scorecard**.
+> The **Contestant** sits down at a **Setup**, is given a **Goal**, and hands back
+> **Output** (a Deliverable + a Transcript), which we grade against an **Answer Key** and
+> roll up into a **Scorecard**.
 
-| # | Part | One-liner | Role |
-|---|------|-----------|------|
-| 1 | **Setup** | what the agent starts with — the files, data, and sandbox already in place | knob (task-defining) |
-| 2 | **Goal** | what the agent is asked to achieve | knob (task-defining) |
-| 3 | **Contestant** | the thing under test: a model run inside the same neutral harness as every other model | the variable we **compare** |
-| 4 | **Output** | everything the agent produced — what it shipped (the **Deliverable**) and how it got there (the **Transcript**) | knob (which surface we grade) |
-| 5 | **Answer Key** | what counts as correct, and how we check the Output against it | follows from the knobs |
-| 6 | **Scorecard** | the tally across many runs — how often it succeeded (pass@1/@3) and what each solve cost | held constant (the **measure**) |
+| # | Part | Plain meaning | Role |
+|---|------|---------------|------|
+| 1 | **Setup** | what the agent starts with — the files, data, and tools already on the desk | can be the hard part |
+| 2 | **Goal** | what the agent is asked to achieve | can be the hard part |
+| 3 | **Contestant** | who's being tested: the model, run in the same neutral harness as everyone else so it's a fair race | the variable we **compare** |
+| 4 | **Output** | what it hands back — the finished work (**Deliverable**) and the record of how it got there (**Transcript**) | can be the hard part (which surface we grade) |
+| 5 | **Answer Key** | how we decide whether the work is any good, and how we check | can be the hard part |
+| 6 | **Scorecard** | the grades rolled up across many runs — how often it succeeded (pass@1/@3) and what each solve cost | held constant (the **measure**) |
 
-### Two parts are not category knobs
+### Two parts are not category-defining
 
-- **Contestant** is the *independent variable* — the thing we vary and rank. In v1 it
-  is a `(model, harness)` pair; we hold the harness neutral so differences trace to the
-  model. (See the harness-as-second-factor extension in PRD §9.)
-- **Scorecard** is the *measure* — identical metrics for everyone (pass@1/@3,
+- **Contestant** is the *thing we compare* — varied and ranked, not a property of the
+  task. In v1 it is a `(model, harness)` pair; the harness is held neutral so differences
+  trace to the model. (See the harness-as-second-factor extension in PRD §9.)
+- **Scorecard** is the *measure* — identical for everyone (pass@1/@3,
   cost-per-solved-task, failure-mode tags).
 
-What's left — **Setup, Goal, Output (surface), Answer Key** — are the four knobs that
-*define* a task. Categories are built from these.
+That leaves **Setup, Goal, Output, Answer Key** — the four parts that can be the *hard
+part* of a task. Categories are built from these.
 
 ### The Output has two surfaces
 
@@ -48,50 +49,56 @@ because we log every run — this is why full transcripts are a first-class deli
 
 ## Part 2 — The category design
 
-**A category is a named answer to one question: "which knob is the bottleneck?"**
+**A category is a named answer to one question: "which part is the hard part?"**
 
-There are four task-knobs, and the **Goal** knob fails in two distinct ways (unclear
-*now* vs. must-survive *over time*), so there are **five** logical categories.
+Four parts can be the hard part, and the **Goal** can be hard in two distinct ways (unclear
+*now* vs. must-survive *over time*), so there are **five** categories. They are listed in
+reading order below — *not* alphabetical, because the letters are stable IDs, not a
+sequence.
 
-| # | Category | Knob (bottleneck) | The hard verb | Graded on | Grader |
-|---|----------|-------------------|---------------|-----------|--------|
-| 1 | **Vague Ask** | Goal — clarity | **clarify it** | Transcript | judge |
-| 2 | **Messy World** | Setup | **notice it** | Deliverable + Transcript | hybrid |
-| 3 | **Full Build** | Output | **build it** | Deliverable | programmatic |
-| 4 | **Long Haul** | Goal — persistence | **hold the line** | Deliverable (final) | programmatic |
-| 5 | **Good Taste** | Answer Key | **judge it** | Deliverable + Transcript | judge |
+| Code | Category | Hard part | The hard verb | Graded on | Grader |
+|------|----------|-----------|---------------|-----------|--------|
+| C | **Vague Ask** | Goal — clarity | **clarify it** | Transcript | judge |
+| D | **Long Haul** | Goal — persistence | **hold the line** | Deliverable (final) | programmatic |
+| A | **Full Build** | Output | **build it** | Deliverable | programmatic |
+| B | **Messy World** | Setup | **notice it** | Deliverable + Transcript | hybrid |
+| E | **Good Taste** | Answer Key | **judge it** | Deliverable + Transcript | judge |
 
-The whole suite in five verbs: **clarify it · notice it · build it · hold the line · judge it.**
+The whole suite in five verbs: **clarify it · hold the line · build it · notice it · judge it.**
 
-The **letter codes are retained as stable IDs** (task-id prefixes, leaderboard columns), mapped to the original taxonomy: **A = Full Build · B = Messy World · C = Vague Ask · D = Long Haul · E = Good Taste**. So `d-01` stays valid and existing letter references elsewhere in the PRD still resolve.
+The **letter codes are retained as stable IDs** (task-id prefixes, leaderboard columns),
+mapped to the original taxonomy: **A = Full Build · B = Messy World · C = Vague Ask ·
+D = Long Haul · E = Good Taste**. So `d-01` stays valid and existing letter references
+elsewhere in the PRD still resolve.
 
 ### v1 scope (Option A)
 
-**v1 ships four categories** (Vague Ask, Messy World, Full Build, Long Haul). The fifth,
+**v1 ships four categories** (Vague Ask, Long Haul, Full Build, Messy World). The fifth,
 **Good Taste**, is deferred to v2 — but its concern (quality, not just correctness) is
-*previewed* in v1 by adding an optional **quality-rubric layer to Full Build** tasks.
-The 5-knob model stays the conceptual backbone: "there are five ways a builder task gets
-hard; v1 ships four and previews the fifth."
+*previewed* in v1 by adding an optional **quality-rubric layer to Full Build** tasks. The
+5-part model stays the conceptual backbone: "there are five ways a builder task gets hard;
+v1 ships four and previews the fifth."
 
 ### Why this beats the old A/B/C/D
 
 - **One organizing principle**, not four mismatched ones — every category answers the
-  same "which knob?" question, so they're finally parallel.
-- **No overlaps.** A task has one home (the knob it's *designed* to stress) plus optional
-  secondary tags. (D-01 used to be both B and D; it is now unambiguously Long Haul, with
-  a secondary Messy-World tag — the data is just its vehicle.)
-- **The gap is named.** All four knobs are covered; the previously-missing Answer-Key knob
-  is now Good Taste, the category that most directly serves the "model taste" deliverable.
+  same "which part is the hard part?" question, so they're finally parallel.
+- **No overlaps.** A task has one home (the part it's *designed* to stress) plus optional
+  secondary tags. (D-01 used to be both B and D; it is now unambiguously Long Haul, with a
+  secondary Messy-World tag — the data is just its vehicle.)
+- **The gap is named.** Setup, Goal, Output, Answer Key are now all covered; the
+  previously-missing Answer-Key part is now Good Taste, the category that most directly
+  serves the "model taste" deliverable.
 
 ### Mapping from the old taxonomy
 
 | Old | New | Note |
 |-----|-----|------|
 | A — spec-to-product | **Full Build** | + optional quality-rubric layer previews Good Taste |
-| B — data judgment | **Messy World** | difficulty is in the Setup (the data), not the words |
-| C — underspecification | **Vague Ask** | difficulty is in interpreting the Goal |
-| D — long-horizon | **Long Haul** | difficulty is the Goal surviving over time |
-| — | **Good Taste** (v2) | new; fills the Answer-Key knob |
+| B — data judgment | **Messy World** | the hard part is the Setup (the data), not the words |
+| C — underspecification | **Vague Ask** | the hard part is interpreting the Goal |
+| D — long-horizon | **Long Haul** | the hard part is the Goal surviving over time |
+| — | **Good Taste** (v2) | new; fills the Answer-Key part |
 
 ---
 
@@ -123,8 +130,8 @@ A category is a *space*, and the space feels infinite. The resolution:
 2. **Write the Answer Key first.** State what a good response does and what a bad one does
    *before* building the task. If you can't write the rubric, it's a vibe, not a test
    case — discard or reshape.
-3. **Isolate the target knob.** The task must be hard *only* because of its knob. Strip
-   incidental difficulty, or you confound categories and don't know what you measured.
+3. **Isolate the hard part.** The task must be hard *only* because of its one hard part.
+   Strip incidental difficulty, or you confound categories and don't know what you measured.
 
 ### The recipe (any category)
 
@@ -133,7 +140,7 @@ A category is a *space*, and the space feels infinite. The resolution:
 3. **Find a real seed** (transcript/ticket) or construct one.
 4. **Define trap + tell.**
 5. **Write the Answer Key first** — if you can't, kill it.
-6. **Strip incidental difficulty** (isolate the knob).
+6. **Strip incidental difficulty** (isolate the hard part).
 7. **Make an easy + a hard variant; pilot on one model** to confirm signal (PRD §14).
 8. **Tag** primary category + failure modes; freeze.
 
