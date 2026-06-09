@@ -6,8 +6,8 @@ well coding agents take a person from a rough idea to a working product.**
 Existing benchmarks (e.g. SWE-bench) test agents on engineer-written GitHub issues inside
 mature codebases. Builder-Bench measures the fastest-growing way people actually use coding
 agents: a PM, analyst, or indie builder describing what they want and expecting the agent to
-build it end to end. Four task categories — **A** spec-to-product, **B** data judgment,
-**C** underspecification, **D** long-horizon coherence — graded with programmatic checks plus
+build it end to end. Four task categories — **A** Vague Ask (underspecified requests), **B** Long Haul (coherence
+over a long build), **C** Full Build (spec-to-product), **D** Messy World (data judgment) — graded with programmatic checks plus
 a validated LLM judge, reported with **cost-per-solved-task** (the angle SWE-bench lacks).
 
 > Status: **M0** (scaffold + first end-to-end task). See [Roadmap](#roadmap).
@@ -18,7 +18,7 @@ The design lives in [`docs/`](docs/):
 
 - [`docs/PRD.md`](docs/PRD.md) — the full product requirements doc (motivation, categories, grading, models, milestones).
 - [`docs/BUILD-KICKOFF.md`](docs/BUILD-KICKOFF.md) — the M0 build brief this scaffold was built from.
-- [`docs/sample-tasks.md`](docs/sample-tasks.md) — two fully worked example tasks (C-01 and D-01).
+- [`docs/sample-tasks.md`](docs/sample-tasks.md) — two fully worked example tasks (a-01 and b-01).
 
 ---
 
@@ -31,8 +31,8 @@ M0 proves the neutral runner works end to end on one task with a clean programma
   Anthropic adapter (other labs come in M3).
 - A **dual-backend sandbox** (`harness/sandbox.py`): Docker (spec-compliant isolation) with a
   local-tmpdir fallback so the runner executes even without Docker installed.
-- Task **D-01** ("dedupe by company, not by location") — a single-session, programmatically
-  graded D-lite coherence task.
+- Task **b-01** ("dedupe by company, not by location") — a single-session, programmatically
+  graded Long-Haul-lite coherence task.
 - Metrics: pass@1 / pass@3 / cost-per-solved-task.
 
 ## Quickstart
@@ -46,7 +46,7 @@ pip install -e .            # or: pip install claude-agent-sdk pyyaml
 export ANTHROPIC_API_KEY=sk-ant-...     # or: claude setup-token
 
 # 3. Run a task
-python -m harness.runner --task d-01 --model opus-4.6
+python -m harness.runner --task b-01 --model opus-4.6
 ```
 
 When it finishes you get:
@@ -59,7 +59,7 @@ When it finishes you get:
 ### CLI
 
 ```
-python -m harness.runner --task d-01 --model opus-4.6 \
+python -m harness.runner --task b-01 --model opus-4.6 \
     [--attempts 3]               # for pass@3
     [--sandbox auto|docker|local]
     [--budget-usd 2.0]           # per-attempt spend cap
@@ -130,17 +130,17 @@ writes (`{workdir, transcript, final_text, ...}`) and prints a single JSON objec
 ## Failure taxonomy
 
 Runs are tagged with builder-persona failure modes: `premature-implementation`, `vision-drift`,
-`silent-assumptions`, `weak-self-verification`, `data-blindness`, `over-eagerness`. D-01 is
+`silent-assumptions`, `weak-self-verification`, `data-blindness`, `over-eagerness`. b-01 is
 designed to surface `vision-drift` and `silent-assumptions` when the early dedupe rule is lost.
 
 ## Roadmap
 
 | Milestone | Scope |
 |-----------|-------|
-| **M0** ✅ | Scaffold, schema, dual-backend runner, D-01 end to end |
-| M1 | 10–12 tasks across categories A and B with graders |
+| **M0** ✅ | Scaffold, schema, dual-backend runner, b-01 end to end |
+| M1 | 10–12 tasks across the Full Build and Messy World categories with graders |
 | M2 | LLM judge + human-labeled validation set + agreement (Cohen's κ ≥ 0.7) report |
-| M3 | Remaining C tasks, 1–2 more D-lite tasks, all model adapters, full run |
+| M3 | Remaining Vague Ask tasks, 1–2 more Long-Haul-lite tasks, all model adapters, full run |
 | M4 | Writeup (taxonomy + 3 recommendations + PAI case study), blog post, static site, launch |
 
 ## License

@@ -1,7 +1,7 @@
 """Builder-Bench runner — the neutral headless agent loop.
 
 Usage:
-    python -m harness.runner --task d-01 --model opus-4.6 [options]
+    python -m harness.runner --task b-01 --model opus-4.6 [options]
 
 End to end it: resolves the task, builds an isolated sandbox from the task's fixed starting
 state, runs the model through the task's prompt steps in one continuous session, logs the
@@ -76,7 +76,7 @@ def has_credential() -> str | None:
 
 # --------------------------------------------------------------------------- task loading
 def resolve_task_dir(task_id: str) -> Path:
-    """Match 'd-01' to tasks/d-01-dedup-survives/ (prefix match), or an exact dir name."""
+    """Match 'b-01' to tasks/b-01-dedup-survives/ (prefix match), or an exact dir name."""
     exact = TASKS_DIR / task_id
     if exact.is_dir():
         return exact
@@ -317,7 +317,7 @@ async def run_task(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="builder-bench", description="Builder-Bench neutral runner")
-    p.add_argument("--task", required=True, help="Task id or prefix, e.g. d-01")
+    p.add_argument("--task", required=True, help="Task id or prefix, e.g. b-01")
     p.add_argument("--model", required=True, help="Model alias, e.g. opus-4.6, sonnet, haiku")
     p.add_argument("--attempts", type=int, default=1, help="Attempts for pass@k (default 1)")
     p.add_argument("--sandbox", choices=["auto", "docker", "local"], default="auto",

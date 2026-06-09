@@ -69,24 +69,22 @@ because we log every run — this is why full transcripts are a first-class deli
 **A category is a named answer to one question: "which part is the hard part?"**
 
 Four parts can be the hard part, and the **Goal** can be hard in two distinct ways (unclear
-*now* vs. must-survive *over time*), so there are **five** categories. They are listed in
-reading order below — *not* alphabetical, because the letters are stable IDs, not a
-sequence.
+*now* vs. must-survive *over time*), so there are **five** categories. The letter codes run
+**A→E in this reading order** and double as the stable task-id and leaderboard prefixes.
 
 | Code | Category | Hard part | The hard verb | Graded on | Grader |
 |------|----------|-----------|---------------|-----------|--------|
-| C | **Vague Ask** | Goal — clarity | **clarify it** | Transcript | judge |
-| D | **Long Haul** | Goal — persistence | **hold the line** | Deliverable (final) | programmatic |
-| A | **Full Build** | Output | **build it** | Deliverable | programmatic |
-| B | **Messy World** | Setup | **notice it** | Deliverable + Transcript | hybrid |
+| A | **Vague Ask** | Goal — clarity | **clarify it** | Transcript | judge |
+| B | **Long Haul** | Goal — persistence | **hold the line** | Deliverable (final) | programmatic |
+| C | **Full Build** | Output | **build it** | Deliverable | programmatic |
+| D | **Messy World** | Setup | **notice it** | Deliverable + Transcript | hybrid |
 | E | **Good Taste** | Answer Key | **judge it** | Deliverable + Transcript | judge |
 
 The whole suite in five verbs: **clarify it · hold the line · build it · notice it · judge it.**
 
-The **letter codes are retained as stable IDs** (task-id prefixes, leaderboard columns),
-mapped to the original taxonomy: **A = Full Build · B = Messy World · C = Vague Ask ·
-D = Long Haul · E = Good Taste**. So `d-01` stays valid and existing letter references
-elsewhere in the PRD still resolve.
+The **letter codes are the stable task-id and leaderboard prefixes**: **A = Vague Ask ·
+B = Long Haul · C = Full Build · D = Messy World · E = Good Taste**. A task id is
+`<letter><nn>`, so the built Long Haul task is `b-01`.
 
 ### v1 scope (Option A)
 
@@ -101,8 +99,8 @@ v1 ships four and previews the fifth."
 - **One organizing principle**, not four mismatched ones — every category answers the
   same "which part is the hard part?" question, so they're finally parallel.
 - **No overlaps.** A task has one home (the part it's *designed* to stress) plus optional
-  secondary tags. (D-01 used to be both B and D; it is now unambiguously Long Haul, with a
-  secondary Messy-World tag — the data is just its vehicle.)
+  secondary tags. (b-01 used to be classifiable as both Messy World and Long Haul; it is now
+  unambiguously Long Haul, with a secondary Messy-World tag — the data is just its vehicle.)
 - **The gap is named.** Setup, Goal, Output, Answer Key are now all covered; the
   previously-missing Answer-Key part is now Good Taste, the category that most directly
   serves the "model taste" deliverable.
@@ -111,10 +109,10 @@ v1 ships four and previews the fifth."
 
 | Old | New | Note |
 |-----|-----|------|
-| A — spec-to-product | **Full Build** | + optional quality-rubric layer previews Good Taste |
-| B — data judgment | **Messy World** | the hard part is the Setup (the data), not the words |
-| C — underspecification | **Vague Ask** | the hard part is interpreting the Goal |
-| D — long-horizon | **Long Haul** | the hard part is the Goal surviving over time |
+| spec-to-product | **Full Build** (C) | + optional quality-rubric layer previews Good Taste |
+| data judgment | **Messy World** (D) | the hard part is the Setup (the data), not the words |
+| underspecification | **Vague Ask** (A) | the hard part is interpreting the Goal |
+| long-horizon | **Long Haul** (B) | the hard part is the Goal surviving over time |
 | — | **Good Taste** (v2) | new; fills the Answer-Key part |
 
 ---

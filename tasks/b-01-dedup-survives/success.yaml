@@ -1,5 +1,5 @@
-id: d-01
-category: D            # Long Haul (formerly "long-horizon coherence"; D-lite: single session, programmatic)
+id: b-01
+category: B            # Long Haul (formerly "long-horizon coherence"; Long-Haul-lite: single session, programmatic)
 name: "Dedupe by company, not by location — survives later steps"
 derived_from: "PM-AI Hiring Index real dedup decision"
 needs_judge: false

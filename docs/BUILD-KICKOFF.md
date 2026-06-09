@@ -10,8 +10,8 @@ two worked example tasks live in `Builder-Bench-sample-tasks.md`. Read both befo
 
 An open-source agentic eval suite that measures how well coding agents take a person from
 a rough idea to a working product (the "builder" persona), with a cost-per-solved-task angle
-SWE-bench lacks. Four task categories: A spec-to-product, B data judgment, C underspecification,
-D long-horizon coherence (D-lite only in v1). Output surfaces: a static leaderboard site, this
+SWE-bench lacks. Four task categories: A Vague Ask (underspecification), B Long Haul (coherence;
+Long-Haul-lite only in v1), C Full Build (spec-to-product), D Messy World (data judgment). Output surfaces: a static leaderboard site, this
 repo, a writeup, and downloadable per-run transcripts.
 
 ## Decisions already locked (do not re-litigate in v1)
@@ -23,9 +23,9 @@ repo, a writeup, and downloadable per-run transcripts.
 - **Models (one flagship + one budget per lab):** Opus 4.6 / Haiku 4.5; GPT-5.5 / GPT-5.4-mini;
   Gemini 3.5 Pro / 3.5 Flash (interim: Flash / Flash-Lite until 3.5 Pro ships).
 - **Metrics:** pass@1, pass@3, cost-per-solved-task, plus failure-mode tags.
-- **Grading:** programmatic first; LLM judge only for C and the subjective part of B; validate
+- **Grading:** programmatic first; LLM judge only for Vague Ask and the subjective part of Messy World; validate
   the judge against hand labels (kappa >= 0.7) before trusting it.
-- **Category D:** v1 ships D-lite (single-session, programmatic). D-hard (multi-session, context
+- **Long Haul (Category B):** v1 ships Long-Haul-lite (single-session, programmatic). Long-Haul-hard (multi-session, context
   resets) is v2. Firm line: anything needing session resume is v2.
 - **License:** Apache 2.0 for code; MIT or CC-BY-4.0 for tasks + canary GUID + private held-out
   split. DCO sign-off, PR-based contributions, author reviews all PRs.
@@ -49,7 +49,7 @@ builder-bench/
     rubrics/                   # per-task rubric.yaml files
     validation/                # human labels + agreement (kappa) report
   tasks/
-    a-01-.../ ... b-.../ c-.../ d-lite-.../
+    a-01-.../ ... b-.../ c-.../ d-.../ e-.../
       prompt.md
       setup.sh
       fixtures/
@@ -72,7 +72,7 @@ builder-bench/
 - `grader.py` — runs checks (and invokes the judge if needed), emits {score, pass, failure_tags}.
 - `reference.md` — expected output / known-good answer. HIDDEN from the agent.
 
-See `Builder-Bench-sample-tasks.md` for two fully worked examples (C-01 and D-01).
+See `Builder-Bench-sample-tasks.md` for two fully worked examples (a-01 and b-01).
 
 ## First milestone — M0 (do this first)
 
@@ -82,33 +82,33 @@ Goal: prove the runner works end to end on one task with a clean programmatic gr
 2. Implement `harness/runner.py` against the Claude Agent SDK in headless mode, with the
    Anthropic adapter only (other adapters come later).
 3. Implement `harness/sandbox.py` for Docker container setup/teardown from a task's `setup.sh`.
-4. Implement task **D-01** ("dedupe by company, not by location") from the sample-tasks file:
+4. Implement task **b-01** ("dedupe by company, not by location") from the sample-tasks file:
    `prompt_step1..4.md`, `fixtures/postings.csv` with the known duplicates, `grader.py` that
    checks the final Acme count == 3 and that earlier unique counts didn't silently inflate.
-5. Run Opus 4.6 against D-01 in the sandbox. Confirm: transcript is logged to `results/runs/`,
-   grader emits a score, metrics compute. Pick D-01 first BECAUSE it needs no judge.
+5. Run Opus 4.6 against b-01 in the sandbox. Confirm: transcript is logged to `results/runs/`,
+   grader emits a score, metrics compute. Pick b-01 first BECAUSE it needs no judge.
 
-Done when: `python -m harness.runner --task d-01 --model opus-4.6` runs the agent in Docker,
+Done when: `python -m harness.runner --task b-01 --model opus-4.6` runs the agent in Docker,
 logs the transcript, grades it programmatically, and writes a result row.
 
 ## Then (M1 to M4, see PRD Section 12)
 
-- M1: 10 to 12 tasks across A and B with graders.
+- M1: 10 to 12 tasks across Full Build and Messy World with graders.
 - M2: LLM judge + hand-labeled validation set + agreement report.
-- M3: remaining C tasks, 1 to 2 more D-lite tasks, all model adapters, full run.
+- M3: remaining Vague Ask tasks, 1 to 2 more Long-Haul-lite tasks, all model adapters, full run.
 - M4: writeup (taxonomy + 3 recommendations + PAI case study), blog post, static site, launch.
 
 ## Source material to pull from (PAI)
 
 The author's PM-AI Hiring Index built real edge cases. Mine its transcripts and data for:
-B tasks (dedup-by-location, order-of-magnitude dashboard discrepancy, title taxonomy), the
-C-01 vague-prompt task, the D-01 dedup task, the failure taxonomy, and the D-hard case study.
-Single transcript pass: tag each moment with a taxonomy tag, a C tag, or a D tag. Keep tasks
+Messy World tasks (dedup-by-location, order-of-magnitude dashboard discrepancy, title taxonomy), the
+a-01 vague-prompt task, the b-01 dedup task, the failure taxonomy, and the Long-Haul-hard case study.
+Single transcript pass: tag each moment with a taxonomy tag, a Clarify tag, or a Drift tag. Keep tasks
 reproducible from a clean clone — extract the pattern and data, never depend on the live PAI repo.
 
 ## Guardrails
 
 - Don't build a hosted submission pipeline in v1. Static site from your own runs only.
-- Don't let D-lite drift into D-hard.
+- Don't let Long-Haul-lite drift into Long-Haul-hard.
 - Round every displayed number. Log every transcript. Pin model versions.
 - State the harness-neutrality caveat plainly in the writeup; it's a feature, not a weakness.

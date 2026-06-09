@@ -20,10 +20,10 @@ can be run against it:
 So a task is the **question + answer key + environment**, frozen. One task → many **runs**.
 Labels for judge validation come from *runs*, not tasks (see PRD §6).
 
-## Folder layout (example: `d-01-dedup-survives/`)
+## Folder layout (example: `b-01-dedup-survives/`)
 
 ```
-d-01-dedup-survives/
+b-01-dedup-survives/
   success.yaml        # manifest — the single source of truth
   setup.sh            # Setup: prepares the starting workdir
   fixtures/           # Setup: input data the agent sees
@@ -39,8 +39,8 @@ d-01-dedup-survives/
 
 | Field | Meaning |
 |-------|---------|
-| `id` | task id, `<letter><nn>` (e.g. `d-01`); the letter is the category code |
-| `category` | A–E stable code — A Full Build · B Messy World · C Vague Ask · D Long Haul · E Good Taste |
+| `id` | task id, `<letter><nn>` (e.g. `b-01`); the letter is the category code |
+| `category` | A–E stable code — A Vague Ask · B Long Haul · C Full Build · D Messy World · E Good Taste |
 | `name` | human-readable title |
 | `derived_from` | provenance (e.g. a PAI edge case) — optional |
 | `needs_judge` | `false` = programmatic only; `true` = hybrid (also routes to the LLM judge) |
@@ -57,9 +57,9 @@ a single `prompt.md`. `mode` is documentation, not logic.
 
 ## Naming & id convention
 
-- Folder: `<id>-<slug>` → `d-01-dedup-survives`
+- Folder: `<id>-<slug>` → `b-01-dedup-survives`
 - Id: `<letter><nn>` → the letter is the stable category code, `nn` a sequence within it.
-- Keep the letter even though categories now have names (Long Haul = D); the codes are
+- Keep the letter even though categories now have names (Long Haul = B); the codes are
   stable IDs that task paths, results, and the leaderboard depend on.
 
 ## The grader contract
@@ -79,7 +79,7 @@ a single `prompt.md`. `mode` is documentation, not logic.
 ## Running a task
 
 ```
-builder-bench --task d-01 --model haiku --attempts 3
+builder-bench --task b-01 --model haiku --attempts 3
 ```
 
 Outputs land in `results/runs/<task-id>/<model>/<timestamp>/attempt-N/`, with the full

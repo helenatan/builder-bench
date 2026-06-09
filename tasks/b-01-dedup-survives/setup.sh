@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the fixed starting state for task d-01.
+# Build the fixed starting state for task b-01.
 # The harness has already copied fixtures/ into the working directory; this script just
 # asserts the known-good seed is present so a broken sandbox fails loudly and early.
 set -euo pipefail
@@ -10,4 +10,4 @@ if [[ ! -f fixtures/postings.csv ]]; then
 fi
 
 rows=$(($(wc -l < fixtures/postings.csv) - 1))   # minus header
-echo "[setup] d-01 ready: ${rows} raw postings in fixtures/postings.csv"
+echo "[setup] b-01 ready: ${rows} raw postings in fixtures/postings.csv"

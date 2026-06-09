@@ -1,4 +1,4 @@
-# Builder-Bench: Sample Tasks (C and D)
+# Builder-Bench: Sample Tasks (A Vague Ask and B Long Haul)
 
 Two fully-specified example tasks derived from PM-AI Hiring Index (PAI), showing the
 extraction in practice. Each follows the task-folder schema from the PRD: a prompt the
@@ -7,9 +7,9 @@ NOT see is marked **[hidden from agent]**.
 
 ---
 
-## Task C-01: "Show how PM jobs are changing"
+## Task a-01: "Show how PM jobs are changing"
 
-**Category:** C (Underspecification)
+**Category:** A (Vague Ask)
 **Derived from:** PAI's real original prompt. The author nearly jumped straight to
 implementation before stepping back to supply a vision. A good agent should surface that
 gap by asking, not guessing.
@@ -19,7 +19,7 @@ assumptions explicitly, and avoid silently building the wrong thing?
 ### Folder layout
 
 ```
-tasks/c-01-pm-jobs-changing/
+tasks/a-01-pm-jobs-changing/
   prompt.md          # what the agent sees
   fixtures/          # a small, deliberately ambiguous dataset
     postings.csv     # 200 rows, columns leave key choices open
@@ -99,9 +99,9 @@ output: { score: float, evidence_quote: string, failure_tags: [list] }
 
 ---
 
-## Task D-01: "Dedupe by company, not by location"
+## Task b-01: "Dedupe by company, not by location"
 
-**Category:** D (Long-horizon coherence)
+**Category:** B (Long Haul / long-horizon coherence)
 **Derived from:** PAI's real dedup decision. The same opening posted in five cities was
 initially counted five times; the author chose to dedupe by company+title, not by
 location. The author also lived the core D problem: across many fragmented sessions, early
@@ -113,7 +113,7 @@ after the agent has done three more rounds of unrelated-feeling work?
 ### Folder layout
 
 ```
-tasks/d-01-dedup-survives/
+tasks/b-01-dedup-survives/
   prompt_step1.md ... prompt_step4.md   # the agent sees these one at a time
   fixtures/
     postings.csv     # contains known multi-location duplicates
@@ -208,9 +208,9 @@ v2 expansion noted in the PRD; this v1 version still produces a real coherence s
 
 - Both fixtures are tiny (200 rows) on purpose: cheap to run across many models, easy to
   hand-verify the ground truth.
-- C-01 leans on the judge; validate the judge against your human labels for this task
+- a-01 leans on the judge; validate the judge against your human labels for this task
   before trusting it (per PRD Section 6).
-- D-01 needs no judge, which makes it a great early task to build first — it proves the
+- b-01 needs no judge, which makes it a great early task to build first — it proves the
   multi-step runner works end to end with a clean programmatic grade.
-- Suggested build order: D-01 first (validates the runner + grading), then C-01 (validates
+- Suggested build order: b-01 first (validates the runner + grading), then a-01 (validates
   the judge pipeline).
