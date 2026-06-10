@@ -17,8 +17,10 @@ a validated LLM judge, reported with **cost-per-solved-task** (the angle SWE-ben
 The design lives in [`docs/`](docs/):
 
 - [`docs/PRD.md`](docs/PRD.md) — the full product requirements doc (motivation, categories, grading, models, milestones).
-- [`docs/BUILD-KICKOFF.md`](docs/BUILD-KICKOFF.md) — the M0 build brief this scaffold was built from.
-- [`docs/sample-tasks.md`](docs/sample-tasks.md) — two fully worked example tasks (a-01 and b-01).
+- [`docs/eval-framework.md`](docs/eval-framework.md) — the design backbone: the six-part anatomy of an evaluation, the five categories, and how to design a test case.
+- [`docs/task-backlog.md`](docs/task-backlog.md) — sub-type menus and seed tasks for each v1 category.
+- [`docs/sample-tasks.md`](docs/sample-tasks.md) — the fully worked design for the a-05 Vague Ask task.
+- [`tasks/README.md`](tasks/README.md) — the task-folder schema for contributors.
 
 ---
 
@@ -111,7 +113,8 @@ tasks/<id>-<slug>/
 
 The **grader contract**: `python grader.py <grade_input.json>` reads a bundle the harness
 writes (`{workdir, transcript, final_text, ...}`) and prints a single JSON object:
-`{"score": float, "passed": bool, "failure_tags": [...], "details": "..."}`.
+`{"score": float, "failure_tags": [...], "details": "..."}`. The runner recomputes
+`passed` as `score >= pass_threshold`; anything the grader prints for it is overwritten.
 
 ## Models
 
@@ -125,7 +128,8 @@ writes (`{workdir, transcript, final_text, ...}`) and prints a single JSON objec
 
 > The PRD targets `opus-4.6`; that exact id is not available in the current environment, so
 > the Anthropic aliases map to the latest shipping ids. Re-pin to the PRD ids when running for
-> record. OpenAI and Google adapters arrive in M3.
+> record. OpenAI and Google adapters arrive in M3, along with a second harness (the OpenAI
+> Agents SDK) so the harness effect is measured rather than assumed away (PRD §9).
 
 ## Failure taxonomy
 

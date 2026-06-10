@@ -37,7 +37,7 @@ tasks/<id>-<slug>/
   setup.sh           # builds the fixed starting state (asserts fixtures, installs deps, etc.)
   fixtures/          # data/files the task needs (keep them small + hand-verifiable)
   success.yaml       # id, category, mode, ordered steps, pass_threshold, possible failure tags
-  grader.py          # prints {score, passed, failure_tags, details} JSON; recompute truth itself
+  grader.py          # prints {score, failure_tags, details} JSON; recompute truth itself
   reference.md       # expected output / known-good answer — HIDDEN from the agent
   expected/          # (optional) machine-readable ground truth used by grader.py
 ```
@@ -64,8 +64,11 @@ grader must **recompute ground truth itself** (don't trust agent-reported number
 single JSON object to stdout:
 
 ```json
-{"score": 0.0, "passed": false, "failure_tags": ["vision-drift"], "details": "..."}
+{"score": 0.0, "failure_tags": ["vision-drift"], "details": "..."}
 ```
+
+The runner recomputes `passed` as `score >= pass_threshold`; graders don't need to set it
+(anything they print for it is overwritten).
 
 Use the shared taxonomy for `failure_tags`: `premature-implementation`, `vision-drift`,
 `silent-assumptions`, `weak-self-verification`, `data-blindness`, `over-eagerness`.

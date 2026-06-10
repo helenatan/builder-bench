@@ -64,14 +64,17 @@ a single `prompt.md`. `mode` is documentation, not logic.
 
 ## The grader contract
 
-`grader.py` runs in the agent's finished workdir and **prints one JSON object on stdout**:
+`grader.py` is invoked as `python grader.py <grade_input.json>` with the **task dir** as cwd;
+the input bundle carries the paths it needs (`{workdir, transcript, final_text, ...}`). It
+**prints one JSON object on stdout**:
 
 ```json
 { "score": 0.0, "failure_tags": ["vision-drift"], "details": "Acme reported as 7" }
 ```
 
 - `score` is a float in `[0,1]` (partial credit allowed).
-- The runner derives `passed = score >= pass_threshold` — graders don't set it.
+- The runner recomputes `passed = score >= pass_threshold`; anything the grader prints for
+  it is overwritten.
 - A missing grader, a crash, or unparseable output is scored `0.0` with a diagnostic tag.
 - For `needs_judge: true`, the programmatic grader handles the objective part and the LLM
   judge scores the subjective rubric; see `judge/` and PRD §6.

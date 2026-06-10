@@ -58,7 +58,7 @@ conflicting requirements · ambiguous referent · missing audience.
 
 - **Backlog:** a-04 ambiguous referent ("fix the bug in the report", repo with several
   plausible bugs) · a-05 PAI's real opening prompt "show how PM jobs are changing"
-  *(severely underspecified — PAI, hard)*.
+  *(severely underspecified — PAI, hard; fully worked design in [sample-tasks.md](sample-tasks.md))*.
 
 ---
 
