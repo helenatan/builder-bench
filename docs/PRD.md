@@ -56,7 +56,7 @@ No public benchmark measures this well. Building one demonstrates a thesis the C
 
 ## 5. Scope: task categories
 
-Four categories ship in v1, roughly 5 to 8 tasks each, 20 to 30 total. Each task is realistic, self-contained, and gradeable.
+Tasks fall into five categories. This section first lays out the anatomy every task shares, then derives the categories from it. Four ship in v1 — roughly 5 to 8 tasks each, 20 to 30 total — and the fifth is previewed and deferred to v2. Each task is realistic, self-contained, and gradeable.
 
 ### The anatomy of an evaluation
 
@@ -82,6 +82,8 @@ Two of the six are never the source of a task's difficulty, because they aren't 
 
 The **Goal** can be hard in two different ways — unclear *now*, or clear but easy to lose *over time* — so there are five categories in all; v1 ships four and previews the fifth. The letter codes run **A→E in this reading order** and double as the stable task-id and leaderboard prefixes: **A** Vague Ask · **B** Long Haul · **C** Full Build · **D** Messy World · **E** Good Taste. Sub-type menus and seed tasks live in [`docs/task-backlog.md`](task-backlog.md).
 
+Each category below ends with a **PAI leverage** note: how much it can draw on PAI (the PM-AI Hiring Index), the real product the author built end to end with Claude Code. Section 8 details what PAI contributes and the boundaries on reusing it.
+
 ### Category A — Vague Ask *(the hard part: the Goal, while it's unclear · "clarify it")*
 Deliberately ambiguous requests; the difficulty is interpreting the **Goal**.
 Examples: "Build me a tracker for my reading" with no schema; "Make this faster" with no target; conflicting requirements in the same prompt.
@@ -94,7 +96,7 @@ Builds where the vision or a key requirement is stated once at the start and mus
 What it probes: requirement drift, whether the original goal survives iteration (and, in v2, compaction and session resets).
 Graded on the **final Deliverable** (the requirement still holds) — programmatic, often a single number.
 
-D splits into two difficulty tiers, and only the second is hard to automate. v1 ships the first; v2 ships the second.
+Long Haul splits into two difficulty tiers, and only the second is hard to automate. v1 ships the first; v2 ships the second.
 
 - **Long-Haul-lite (v1, automatable):** single session, one requirement stated once at step 1, agent runs through several more steps, final check confirms the requirement still holds. The grade is programmatic, often a single number, no judge needed. The b-01 sample task ("dedupe by company, not by location") is exactly this. Ship 2 to 3 of these in v1.
 - **Long-Haul-hard (v2, deferred):** multi-session builds with an actual context reset or compaction in the middle, requiring session-resume plumbing, harness instrumentation, and likely judge-assisted grading. This is the richest version and deserves a proper v2 rather than a rushed v1 corner.
@@ -124,19 +126,27 @@ Graded on the **Deliverable** (for quality) + the **Transcript** (for reasoning)
 Deferred to v2 because it is the hardest to grade reliably; v1 *previews* it via the optional quality-rubric layer on Full Build (Category C). This is the category that most directly serves the "model taste" deliverable (Section 10), so it earns a proper v2 rather than a rushed v1 corner.
 
 > v1 priority: Full Build and Messy World are the core (most automatable, clearest signal). Vague Ask is cheap and high-value, include it. Long Haul ships as Long-Haul-lite (2 to 3 single-session tasks) plus the PAI case study in the writeup; Long-Haul-hard is explicitly deferred to v2. Build one Long-Haul-lite task (b-01) early, since it validates the multi-step runner.
-> PAI seeds roughly 6 to 10 of the 20 to 30 tasks (most of Messy World, part of Full Build, 1 to 2 of Vague Ask, the template for Long Haul), plus the entire real-transcript failure taxonomy and the narrative spine of the writeup. Deliberately add non-PAI tasks (auth, API integration, a non-data app) so the suite reads as a general builder benchmark, not evals for one project.
+> PAI seeds roughly 6 to 10 of the 20 to 30 tasks (most of Messy World, part of Full Build, 1 to 2 of Vague Ask, the template for Long Haul), plus the failure taxonomy and the writeup's narrative spine. Section 8 details the contributions and the boundaries that keep this a general builder benchmark rather than evals for one project.
 
 ---
 
 ## 6. How grading works
 
-Each task ships with a setup script, a clear success definition, and a grader. Grading is hybrid:
+Grading implements the **Answer Key** from Section 5, and it splits along the two Output surfaces: programmatic checks grade the **Deliverable**; an LLM judge grades the **Transcript**. Every task uses the first; only the categories that grade behavior need the second.
 
-1. **Programmatic checks first.** Does it run? Do the tests pass? Does the data validation hold? Does the output match expected schema/values? This handles most of the Full Build and Messy World categories objectively.
-2. **LLM-judge for the subjective parts.** A rubric-scored judge evaluates spec fidelity, quality of clarifying questions (Vague Ask), and whether the agent explained its reasoning (Messy World). Each rubric is explicit and per-task.
-3. **Human-validated judge.** Labels come from runs, not tasks, and only Vague Ask and the subjective part of Messy World need a judge, so the subjective subset is small (roughly 50 to 70 transcripts across 6 models). v1 hand-labels the **entire** subjective subset once rather than sampling. Target agreement: Cohen's kappa >= 0.7 (or ~85% exact agreement), reported honestly. Label ~15 to 20 cases twice to establish a human-human ceiling (the judge is not expected to beat it). If the judge falls short, fix the rubric, not the judge model, and re-label. Read every judge-vs-human disagreement to surface systematic bias (good writeup material). Freeze a ~20 to 30 case gold set as a regression check for rubric or judge-model changes.
+1. **Programmatic checks first.** Does it run? Do the tests pass? Does the data validation hold? Does the output match expected schema/values? This grades the Deliverable, and it fully covers Full Build, Long Haul, and the objective half of Messy World.
+2. **LLM judge for the subjective parts.** A rubric-scored judge evaluates the Transcript: the quality of clarifying questions (Vague Ask) and whether the agent flagged and explained data issues (Messy World). Each rubric is explicit and per-task. Only Vague Ask and the subjective half of Messy World need it.
 
-Metrics reported per task and per category:
+**Validating the judge before trusting it.** Labels come from runs, not tasks, and only two categories need the judge, so the subjective subset is small — roughly 50 to 70 transcripts across the v1 contestant set (validated once on the baseline-harness runs, then reused). Therefore:
+
+- Hand-label the **entire** subjective subset once, rather than sampling it.
+- Target agreement: Cohen's kappa >= 0.7 (or ~85% exact agreement), reported honestly.
+- Label ~15 to 20 cases twice to establish a human-human ceiling (the judge is not expected to beat it).
+- If the judge falls short, fix the rubric, not the judge model, and re-label.
+- Read every judge-vs-human disagreement to surface systematic bias (good writeup material).
+- Freeze a ~20 to 30 case gold set as a regression check for rubric or judge-model changes.
+
+The grades roll up into the **Scorecard**, reported per task and per category:
 
 - **pass@1** and **pass@3** (single attempt and best of three)
 - **Cost per solved task** (tokens and dollars)
@@ -146,25 +156,16 @@ Metrics reported per task and per category:
 
 ## 7. Failure taxonomy
 
-The taxonomy is mined from real Claude Code transcripts and seeds both task design and result tagging. Starting categories:
+The taxonomy is mined from the author's real Claude Code transcripts (the PAI build — Section 8) and seeds both task design and result tagging. Six starting failure modes, each with a primary "home": the task category designed to provoke it. The categories and the taxonomy are two views of the same map — a failure can surface anywhere, but each has one place we deliberately hunt it.
 
-- **Premature implementation:** jumps to code before understanding the goal
-- **Vision drift:** loses the originally stated objective over a long session
-- **Silent assumptions:** guesses on ambiguity instead of asking or flagging
-- **Weak self-verification:** does not check its own work; ships broken output
-- **Data blindness:** does not notice data-quality problems
-- **Over-eagerness:** does more than asked, introducing scope or risk
-
-Each failure has a primary "home" category designed to provoke it — the categories and the taxonomy are two views of the same map (failures can still surface anywhere; this is just where we hunt them):
-
-| Failure | Primarily provoked by |
-|---------|------------------------|
-| Premature implementation | A — Vague Ask |
-| Vision drift | B — Long Haul |
-| Silent assumptions | A — Vague Ask · D — Messy World |
-| Weak self-verification | C — Full Build |
-| Data blindness | D — Messy World |
-| Over-eagerness | C — Full Build · E — Good Taste |
+| Failure mode | What it looks like | Home category |
+|--------------|--------------------|---------------|
+| **Premature implementation** | jumps to code before understanding the goal | A — Vague Ask |
+| **Silent assumptions** | guesses on ambiguity instead of asking or flagging | A — Vague Ask · D — Messy World |
+| **Vision drift** | loses the originally stated objective over a long session | B — Long Haul |
+| **Weak self-verification** | does not check its own work; ships broken output | C — Full Build |
+| **Over-eagerness** | does more than asked, introducing scope or risk | C — Full Build · E — Good Taste |
+| **Data blindness** | does not notice data-quality problems | D — Messy World |
 
 Each failure observed in a run gets tagged. The taxonomy is a deliverable in its own right: it is the bridge from "scores" to "here is what to change in the model."
 
@@ -172,7 +173,7 @@ Each failure observed in a run gets tagged. The taxonomy is a deliverable in its
 
 ## 8. Leveraging PM-AI Hiring Index (PAI) as source material
 
-PAI, the author's web app built end to end with Claude Code, is a primary source for this benchmark rather than a coincidental side project. It contributes in four ways, ordered by value.
+PAI — the PM-AI Hiring Index, the author's web app built end to end with Claude Code — is a primary source for this benchmark rather than a coincidental side project. It contributes in four ways, ordered by value.
 
 **As real, battle-tested tasks.** The strongest benchmark tasks come from real problems, not invented ones. PAI's actual edge cases (dedup-by-location, the order-of-magnitude dashboard discrepancy, title-taxonomy classification) become Messy World tasks with known correct answers and known traps. A reconstructed pipeline slice becomes a Full Build task. The vague original prompt becomes a Vague Ask task. A multi-session feature becomes the template for a Long Haul task. See the per-category notes in Section 5 for which tasks each category draws from PAI.
 
