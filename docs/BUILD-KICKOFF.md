@@ -91,7 +91,7 @@ Goal: prove the runner works end to end on one task with a clean programmatic gr
 Done when: `python -m harness.runner --task b-01 --model opus-4.6` runs the agent in Docker,
 logs the transcript, grades it programmatically, and writes a result row.
 
-## Then (M1 to M4, see PRD Section 12)
+## Then (M1 to M4, see PRD Section 11)
 
 - M1: 10 to 12 tasks across Full Build and Messy World with graders.
 - M2: LLM judge + hand-labeled validation set + agreement report.

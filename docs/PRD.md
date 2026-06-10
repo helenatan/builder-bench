@@ -244,31 +244,18 @@ Honest limits, stated in the writeup:
 
 ---
 
-## 10. Deliverables
+## 10. Deliverables: what the final product looks like
 
-1. **Public GitHub repo** with the task suite, runner, graders, and contribution docs.
-2. **Results report** (in-repo): pass@1/pass@3 and cost per solved task across all models and categories, with the judge-vs-human agreement number.
-3. **Failure taxonomy writeup** with transcript excerpts as evidence.
-4. **Recommendations:** three concrete, prioritized model-behavior changes derived from the results. This is the most important deliverable; it demonstrates model taste, not just engineering.
-5. **A blog post** summarizing the project for a general audience.
+The reference point is swebench.com — a good north star. The finished product has four surfaces; the first three are required for v1.
 
----
-
-## 11. What the final product looks like
-
-The reference point is swebench.com, which is a good north star. The finished product has four surfaces, three of which are required for v1.
-
-**Leaderboard site (the public face).** A ranked table of models by overall pass@1, with category columns (A–D: Vague Ask / Long Haul / Full Build / Messy World) and a `cost-per-solved-task` column sitting right next to the pass rate. Each row links to that model's run details. This is what gets screenshotted and shared. Two things deliberately differ from swebench.com: cost is a first-class column (SWE-bench largely ignores it), and the category breakdown exposes *where* a model wins, which is what turns a result into a recommendation.
-
-**GitHub repo (the substance).** The task suite, the neutral harness, the graders, and contribution docs so others can submit tasks or models.
-
-**Writeup / "paper" (the credibility).** Methodology, the failure taxonomy, the harness-as-second-factor result (Section 9), and the three model-behavior recommendations. For this project the writeup doubles as the blog post and the interview artifact.
-
-**Dataset + per-run trajectories (the receipts).** The tasks themselves plus the full logged transcript for every run, so anyone can audit a pass or failure. The trajectory viewer is the trust layer; skeptics can see exactly what happened.
+1. **Leaderboard site — the public face.** A ranked table of models by overall pass@1, with category columns (A–D) and `cost-per-solved-task` sitting right next to the pass rate; each row links to that model's run details. Backed by an in-repo results report that includes the judge-vs-human agreement number. Two deliberate differences from swebench.com: cost is a first-class column (SWE-bench largely ignores it), and the category breakdown exposes *where* a model wins — which is what turns a result into a recommendation.
+2. **GitHub repo — the substance.** The task suite, the two-harness runner, the graders, and contribution docs so others can submit tasks or models.
+3. **Writeup — the credibility.** Methodology, the failure taxonomy with transcript excerpts as evidence, the harness-effect result (Section 9), and **three concrete, prioritized model-behavior recommendations** — the most important deliverable, because it demonstrates model taste rather than just engineering. The writeup doubles as the blog post and the interview artifact.
+4. **Dataset + per-run trajectories — the receipts.** Every task plus the full logged transcript of every run, so anyone can audit a pass or failure.
 
 ### Positioning
 
-Do not position Builder-Bench as "SWE-bench but mine." Position it as the complementary benchmark for how non-engineers actually use coding agents (spec-to-product, data judgment, underspecification, coherence), with the cost angle SWE-bench lacks. More defensible, more memorable.
+Do not position Builder-Bench as "SWE-bench but mine." Position it as the complementary benchmark for how non-engineers actually use coding agents (vague asks, long-running builds, spec-to-product, messy real-world data), with the cost angle SWE-bench lacks. More defensible, more memorable.
 
 ### v1 vs aspirational
 
@@ -279,13 +266,13 @@ Do not position Builder-Bench as "SWE-bench but mine." Position it as the comple
 | Writeup | One report + blog post with taxonomy and 3 recommendations | Ongoing series; methodology paper |
 | Trajectories | Logged transcripts downloadable per run | Interactive in-browser trajectory viewer |
 | Submission flow | None (author runs everything) | Hosted submission + validation pipeline |
-| Coverage | ~26 tasks (A/B/C/Long-Haul-lite), 6 models (3 labs × 2 tiers) × 2 harnesses, flagship tier first | Good Taste (E), Long-Haul-hard multi-session tasks, native (third) harness per lab, more labs/tiers |
+| Coverage | ~26 tasks across A–D (Long Haul at the lite tier), 6 models (3 labs × 2 tiers) × 2 harnesses, flagship tier first | Good Taste (E), Long-Haul-hard multi-session tasks, native (third) harness per lab, more labs/tiers |
 
-> The leaderboard is what gets shared; the repo and writeup are what earn credibility. v1 is intentionally a static, self-run artifact: no submission pipeline, no hosting ops. That burden is only worth taking on if the project gains traction.
+> v1 is intentionally a static, self-run artifact: no submission pipeline, no hosting ops. That burden is only worth taking on if the project gains traction.
 
 ---
 
-## 12. Milestones
+## 11. Milestones
 
 | Milestone | Scope | Rough effort |
 |-----------|-------|--------------|
@@ -295,16 +282,16 @@ Do not position Builder-Bench as "SWE-bench but mine." Position it as the comple
 | M3: Full suite + run | Remaining Vague Ask tasks, 1 to 2 more Long-Haul-lite tasks, run all models, collect results | Weekend 4 |
 | M4: Writeup + publish | Taxonomy, recommendations, PAI long-horizon case study, blog post, repo polish, launch | Weekend 5 |
 
-> Target: a credible v1 in about 4 to 5 weekends. Must-haves: Full Build, Messy World, Vague Ask, and Long-Haul-lite (2 to 3 single-session coherence tasks), and the writeup. Explicitly cuttable to fast-follow: the competitor-model comparison and the second budget tier. Explicitly deferred to v2: Long-Haul-hard (multi-session coherence with context resets).
+> Target: a credible v1 in about 4 to 5 weekends. If time runs short, the pre-agreed cuts are the competitor-model comparison and the second budget tier — never the writeup. (Long-Haul-hard is already deferred to v2; see Section 5.)
 
 ---
 
-## 13. Success criteria
+## 12. Success criteria
 
 **Project is successful if:**
 
 - The repo runs end to end for someone else from a clean clone (reproducibility).
-- The LLM judge agrees with human labels at a defensible rate (target: high agreement on the validation set; report the actual number honestly).
+- The LLM judge agrees with human labels at a defensible rate (Cohen's kappa >= 0.7, Section 6; report the actual number honestly).
 - Results show a clear, defensible difference between models or a clear pattern of failures.
 - The writeup names three specific model-behavior changes that a model team could act on.
 
@@ -315,21 +302,26 @@ Do not position Builder-Bench as "SWE-bench but mine." Position it as the comple
 
 ---
 
-## 14. Risks and mitigations
+## 13. Risks and mitigations
 
 | Risk | Mitigation |
 |------|------------|
 | Tasks too easy or too hard (no signal) | Pilot each task on one model first; tune difficulty before scaling the run |
 | LLM judge is unreliable | Validate against human labels before trusting it; keep programmatic checks as the primary grader |
-| Scope creep (too many tasks/categories) | Hard-cap v1 at 30 tasks; Long Haul and the competitor comparison are explicitly cuttable |
+| Scope creep (too many tasks/categories) | Hard-cap v1 at 30 tasks; pre-agreed cut list in Section 11 (competitor comparison, second budget tier) |
 | Reproducibility breaks across machines | Docker + pinned versions + logged transcripts from day one |
 | Cost of running full suite across models | Estimate token cost per task in M1; budget before the full run |
 
 ---
 
-## 15. Open questions
+## 14. Open questions — all resolved
 
-- ~~Which competitor model to include for comparison, and is its API access straightforward?~~ **Resolved (June 2026):** two tiers per lab, all with straightforward API access. Flagships: Claude Opus 4.6 (native via Claude Agent SDK), GPT-5.5 (OpenAI Responses/Chat Completions), Gemini 3.5 Pro (Google AI Studio; Flash interim until Pro ships). Budget tiers for the cost-comparison angle: Haiku 4.5, GPT-5.4-mini, Gemini 3.5 Flash (interim Flash-Lite). Run through **two** neutral harnesses (Claude Agent SDK + OpenAI Agents SDK) as a measured second factor, flagship tier first; report cost-per-solved-task. See Section 9.
-- ~~How many human labels are enough to trust the judge for each subjective category?~~ **Resolved:** hand-label the entire subjective subset (only Vague Ask and subjective Messy World need a judge; ~50 to 70 transcripts), target Cohen's kappa >= 0.7, establish a human-human ceiling on ~15 to 20 double-labeled cases, fix the rubric (not the model) on shortfall, and freeze a ~20 to 30 case gold regression set. See Section 6.
-- ~~Should Long Haul (the long-horizon category) ship in v1 or move to a clearly scoped v2?~~ **Resolved:** split it. Long-Haul-lite (single-session, one stated requirement that must survive N steps, programmatically graded) ships in v1 as 2 to 3 tasks plus the PAI long-horizon case study in the writeup. Long-Haul-hard (multi-session with context resets/compaction, harness-instrumented) is deferred to a clearly scoped v2. The v1/v2 line is firm: anything requiring session resume is v2. See Section 5.
-- ~~What is the right license and contribution model to encourage outside task submissions?~~ **Resolved (v1 scope):** License by asset type. Code (harness, graders): **Apache 2.0**. Tasks/dataset: **MIT or CC-BY-4.0** plus a contamination guard (embed a canary GUID, add a "do not train on this" statement, and keep a small **private held-out split** out of the public repo). Contribution model is intentionally lightweight: GitHub PR flow with a `CONTRIBUTING.md` and a task template matching the folder schema; CI validates each submitted task (schema check, grader runs in sandbox, reproducible from clean clone); each task must ship a reference solution/expected output and be piloted on >=1 model to confirm it produces signal; **DCO sign-off, not a CLA**; benevolent-dictator governance (author reviews all PRs). The private held-out split is run manually in v1; any hosted submission-validation pipeline is deferred to v2.
+The decisions live in their home sections; this list records that each question was asked and closed.
+
+- ~~Which competitor models, and is API access straightforward?~~ **Resolved:** two tiers per lab across three labs, run through two neutral harnesses as a measured second factor, flagship tier first. Model matrix and pricing in **Section 9**.
+- ~~How many human labels are enough to trust the judge?~~ **Resolved:** hand-label the entire subjective subset (~50 to 70 transcripts), validate to Cohen's kappa >= 0.7 against a human-human ceiling, and freeze a gold regression set. Full protocol in **Section 6**.
+- ~~Should Long Haul ship in v1 or move to v2?~~ **Resolved:** split it — Long-Haul-lite ships in v1, Long-Haul-hard (multi-session, context resets) is deferred to v2 behind a firm line. Tiers in **Section 5**.
+- ~~What license and contribution model?~~ **Resolved (the one decision not recorded elsewhere in this PRD):**
+  - **License by asset type:** code (harness, graders) under **Apache 2.0**; tasks/dataset under **MIT or CC-BY-4.0**, plus a contamination guard — a canary GUID, a "do not train on this" statement, and a small **private held-out split** kept out of the public repo (run manually in v1).
+  - **Contribution flow:** GitHub PRs against the task template in `CONTRIBUTING.md`; CI validates each submission (schema check, grader runs in sandbox, reproducible from a clean clone); every task ships a reference solution and is piloted on >=1 model to confirm signal.
+  - **Governance:** DCO sign-off (not a CLA); author reviews all PRs. A hosted submission pipeline is deferred to v2.

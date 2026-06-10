@@ -141,7 +141,7 @@ A category is a *space*, and the space feels infinite. The resolution:
 
 1. **Trap + Tell.** Every task needs a **trap** (the tempting wrong move) and a **tell**
    (the observable signal separating pass from fail). No trap → too easy. No tell → not
-   gradeable. (This is the PRD §14 "no signal" risk made concrete.)
+   gradeable. (This is the PRD §13 "no signal" risk made concrete.)
 2. **Write the Answer Key first.** State what a good response does and what a bad one does
    *before* building the task. If you can't write the rubric, it's a vibe, not a test
    case — discard or reshape.
@@ -156,7 +156,7 @@ A category is a *space*, and the space feels infinite. The resolution:
 4. **Define trap + tell.**
 5. **Write the Answer Key first** — if you can't, kill it.
 6. **Strip incidental difficulty** (isolate the hard part).
-7. **Make an easy + a hard variant; pilot on one model** to confirm signal (PRD §14).
+7. **Make an easy + a hard variant; pilot on one model** to confirm signal (PRD §13).
 8. **Tag** primary category + failure modes; freeze.
 
 ### Category-specific wrinkle: interactive tasks
