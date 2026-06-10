@@ -19,11 +19,11 @@ A good Builder-Bench task is **realistic, self-contained, reproducible from a cl
 produces clear signal** (not trivially passed by every model, not impossible for all).
 
 1. Copy the schema below into `tasks/<id>-<slug>/`. Use the next free id in your category
-   (`a-`, `b-`, `c-`, `d-lite-`).
+   (`a-` Vague Ask, `b-` Long Haul, `c-` Full Build, `d-` Messy World, `e-` Good Taste).
 2. Write a **reference solution / expected output** (`reference.md`, optionally
    `expected/`). This is hidden from the agent.
-3. Make the grade **programmatic where possible**. Only Category C and the subjective part of
-   B should need the LLM judge; everything else should be a deterministic check.
+3. Make the grade **programmatic where possible**. Only Vague Ask and the subjective part of
+   Messy World should need the LLM judge; everything else should be a deterministic check.
 4. **Pilot it on ≥1 model** and confirm it produces signal (some models pass, some fail, or it
    cleanly isolates one behavior). Include the pilot result in your PR description.
 5. Ensure it runs from a clean clone in the sandbox — no dependency on private data, no network
@@ -37,7 +37,7 @@ tasks/<id>-<slug>/
   setup.sh           # builds the fixed starting state (asserts fixtures, installs deps, etc.)
   fixtures/          # data/files the task needs (keep them small + hand-verifiable)
   success.yaml       # id, category, mode, ordered steps, pass_threshold, possible failure tags
-  grader.py          # prints {score, passed, failure_tags, details} JSON; recompute truth itself
+  grader.py          # prints {score, failure_tags, details} JSON; recompute truth itself
   reference.md       # expected output / known-good answer — HIDDEN from the agent
   expected/          # (optional) machine-readable ground truth used by grader.py
 ```
@@ -46,9 +46,9 @@ tasks/<id>-<slug>/
 
 ```yaml
 id: x-01
-category: A | B | C | D
+category: A | B | C | D | E
 name: "..."
-needs_judge: false        # true only for C / subjective-B
+needs_judge: false        # true only for A (Vague Ask) / subjective D (Messy World)
 mode: single | multi_step
 steps: [prompt_step1.md, ...]   # omit for single prompt.md
 grader: grader.py
@@ -64,8 +64,11 @@ grader must **recompute ground truth itself** (don't trust agent-reported number
 single JSON object to stdout:
 
 ```json
-{"score": 0.0, "passed": false, "failure_tags": ["vision-drift"], "details": "..."}
+{"score": 0.0, "failure_tags": ["vision-drift"], "details": "..."}
 ```
+
+The runner recomputes `passed` as `score >= pass_threshold`; graders don't need to set it
+(anything they print for it is overwritten).
 
 Use the shared taxonomy for `failure_tags`: `premature-implementation`, `vision-drift`,
 `silent-assumptions`, `weak-self-verification`, `data-blindness`, `over-eagerness`.
@@ -75,11 +78,11 @@ Use the shared taxonomy for `failure_tags`: `premature-implementation`, `vision-
 - Keep the harness **neutral**: anything that helps one provider must help all. Provider
   specifics belong in `harness/adapters/<provider>.py` behind the `ModelAdapter` contract.
 - Match the surrounding style; no new heavy dependencies without discussion.
-- Run the existing task end to end (`python -m harness.runner --task d-01 --model haiku`)
+- Run the existing task end to end (`python -m harness.runner --task b-01 --model haiku`)
   before opening a PR touching the harness.
 
 ## What not to submit
 
 - Tasks that need the full PM-AI Hiring Index repo, private credentials, or live external state.
-- Tasks requiring session resume / context reset (that's the deferred v2 "D-hard" track).
+- Tasks requiring session resume / context reset (that's the deferred v2 "Long-Haul-hard" track).
 - Anything that embeds the contamination canary GUID outside `DATASET_LICENSE`.

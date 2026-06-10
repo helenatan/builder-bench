@@ -1,4 +1,4 @@
-# Reference solution — d-01 (HIDDEN from the agent)
+# Reference solution — b-01 (HIDDEN from the agent)
 
 **Rule:** one opening = one (company, title) pair. Location is ignored for counting.
 

@@ -9,7 +9,7 @@ venv/
 # OS
 .DS_Store
 
-# Held-out split — never commit (PRD §15, license model)
+# Held-out split — never commit (PRD §14, license model)
 private/*
 !private/.gitkeep
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Grader for task d-01 (dedupe by company, not by location — survives later steps).
+"""Grader for task b-01 (dedupe by company, not by location — survives later steps).
 
 Programmatic, no judge. Reads the run bundle written by the harness:
     python grader.py <grade_input.json>

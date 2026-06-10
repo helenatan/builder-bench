@@ -1,4 +1,4 @@
-"""Smoke tests: metrics math + the D-01 grader, runnable from a clean clone with no auth.
+"""Smoke tests: metrics math + the b-01 grader, runnable from a clean clone with no auth.
 
     pip install -e ".[dev]" && pytest
 
@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
-GRADER = REPO / "tasks" / "d-01-dedup-survives" / "grader.py"
+GRADER = REPO / "tasks" / "b-01-dedup-survives" / "grader.py"
 
 sys.path.insert(0, str(REPO))
 from harness.metrics import aggregate, cost_per_solved, pass_at_k  # noqa: E402
