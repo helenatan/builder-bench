@@ -12,7 +12,7 @@ Last updated: June 2026
 
 Builder-Bench measures how well coding agents (Claude Code, Codex, and others) take a person from a rough idea to a working, shipped product, the way a PM, designer, or analyst actually works, rather than the way an engineer fixes bugs in an existing repo.
 
-Existing benchmarks like SWE-bench test agents on engineer-written GitHub issues inside mature codebases. That misses a rapidly growing way people use coding agents: a non-engineer describing what they want and expecting the agent to build it end to end. (The writeup should back this growth claim with usage data — e.g. the Anthropic Economic Index or equivalent published usage breakdowns — rather than assert it.) Builder-Bench fills that gap with a graded task suite, a failure taxonomy mined from real transcripts, and a writeup that translates results into concrete recommendations for a model team.
+Existing benchmarks like SWE-bench test agents on engineer-written GitHub issues inside mature codebases. That misses a rapidly growing way people use coding agents: a non-engineer describing what they want and expecting the agent to build it end to end. Builder-Bench fills that gap with a graded task suite, a failure taxonomy mined from real transcripts, and a writeup that translates results into concrete recommendations for a model team.
 
 This is a portfolio project with two audiences: the open-source community (a useful benchmark) and Anthropic's Claude Code model performance team (evidence of eval-building skill and model taste).
 
