@@ -24,12 +24,13 @@ This is a portfolio project with two audiences: the open-source community (a use
 
 1. Produce a reproducible, open-source benchmark of 20 to 30 tasks across four categories that reflect real "builder" workflows.
 2. Grade agents automatically with a hybrid harness (programmatic checks plus a validated LLM judge).
-3. Run the benchmark across at least three models and report pass rates, cost per solved task, and failure modes.
+3. Run the benchmark across three Anthropic tiers (Opus, Sonnet, Haiku) and report pass rates, cost per solved task, and failure modes.
 4. Publish a writeup with a failure taxonomy and three concrete model-behavior changes, backed by transcript evidence.
 
 ### Non-goals
 
 - Not a general SWE benchmark. We are not re-testing bug-fixing in large legacy repos.
+- Not a cross-lab comparison in v1. OpenAI and Gemini models — and the second-harness experiment that only makes sense with them — are out of scope due to API cost; they are the headline v2 extension (Section 9).
 - Not a leaderboard service. v1 is a static repo with results, not a hosted, continuously updated leaderboard.
 - Not a model-training artifact. We measure and diagnose; we do not fine-tune.
 - Not enterprise permission/security testing. That is a separate project.
@@ -147,7 +148,7 @@ Grading implements the **Answer Key** from Section 5, and it splits along the tw
 1. **Programmatic checks first.** Does it run? Do the tests pass? Does the data validation hold? Does the output match expected schema/values? This grades the Deliverable, and it fully covers Full Build, Long Haul, and the objective half of Messy World.
 2. **LLM judge for the subjective parts.** A rubric-scored judge evaluates the Transcript: the quality of clarifying questions (Vague Ask) and whether the agent flagged and explained data issues (Messy World). Each rubric is explicit and per-task. Only Vague Ask and the subjective half of Messy World need it.
 
-**Validating the judge before trusting it.** Labels come from runs, not tasks, and only two categories need the judge, so the subjective subset is small — roughly 50 to 70 transcripts across the v1 contestant set (validated once on the baseline-harness runs, then reused). Therefore:
+**Validating the judge before trusting it.** Labels come from runs, not tasks, and only two categories need the judge, so the subjective subset is small — roughly 25 to 40 transcripts across the three-model contestant set. Therefore:
 
 - Hand-label the **entire** subjective subset once, rather than sampling it.
 - Target agreement: Cohen's kappa >= 0.7 (or ~85% exact agreement), reported honestly.
@@ -160,7 +161,7 @@ Grading implements the **Answer Key** from Section 5, and it splits along the tw
 The grades roll up into the **Scorecard**, reported per task and per category:
 
 - **pass@1** and **pass@3** (single attempt and best of three)
-- **Cost per solved task** — defined as total spend on **all** attempts, including failed ones, divided by the number of tasks solved; failed retries are part of a model's real cost. Undefined when a model solves zero tasks in a slice (shown as "—", never ranked). The canonical figure comes from the baseline-harness runs; per-harness costs appear in the harness analysis (Section 9).
+- **Cost per solved task** — defined as total spend on **all** attempts, including failed ones, divided by the number of tasks solved; failed retries are part of a model's real cost. Undefined when a model solves zero tasks in a slice (shown as "—", never ranked). Costs are **imputed from token counts at list API prices** regardless of how a run was actually paid for (subscription vs. API key), so comparisons stay apples-to-apples; the payment mode is noted per run.
 - **Failure mode tags** (from the taxonomy in Section 7)
 
 **Reading the numbers honestly.** With 5 to 8 tasks per category, a single task flipping moves a category pass rate by 12 to 20 points — so per-category results are directional, not rankings. The report shows confidence intervals on every pass rate, declines to rank models whose intervals overlap, and treats overall pass@1 across the full suite as the primary comparison. Where a category-level claim feeds a recommendation, run extra attempts on that cell before making it.
@@ -214,38 +215,32 @@ A single pass over the PAI transcripts produces material for three deliverables 
 
 ## 9. Technical design
 
-- **Runner:** headless agent execution through a **neutral harness**, so the thing under test is a `(model, harness)` pair held as comparable as possible across providers. The baseline harness is the **Claude Agent SDK** — a thin adapter layer swaps the underlying model (Anthropic, OpenAI, Google) behind identical scaffolding. A **second harness, the OpenAI Agents SDK**, is added as a deliberate *second factor* so we can measure the harness effect rather than assume it away. See the harness note below.
+- **Runner:** headless agent execution through one **neutral harness**, the **Claude Agent SDK**, with a thin adapter layer so the scaffolding is identical for every model run. v1 is Anthropic-only, so a single harness suffices and no rival lab's model is disadvantaged by Claude-native scaffolding; the two-harness second-factor design moves to v2 with the cross-lab comparison. See the harness note below.
 - **Sandboxing:** each task runs in an isolated Docker container with a fixed starting state, so runs are reproducible and tasks cannot interfere.
 - **Task format & definition:** a **task** is the reusable, model-independent unit of evaluation — a folder that freezes three of the six framework parts so any contestant can be run against it: the **Goal** (the prompt or prompt-steps), the **Setup** (`setup.sh` + `fixtures/`), and the **Answer Key** (`grader.py` + `expected/` + a hidden reference solution), bound by a `success.yaml` manifest. The other three parts live *outside* the task: the **Contestant** is supplied at run time (`--model`), the **Output** is produced into the run's workdir, and the **Scorecard** is aggregated across runs. One task → many **runs** (attempts); pass@k aggregates them, and labels for judge validation come from *runs*, not tasks (see §6). This is also why a task is not the same as a single "test case": a test case is one input→expected→grader row evaluated in one model call, whereas a task is an *environment* an agent works in across many turns, graded on its trajectory and end-state. The folder schema is documented in [`tasks/README.md`](../tasks/README.md) so others can contribute tasks.
-- **Models in v1 (one flagship + one budget tier per lab):** Each provider is run at two tiers so the suite can answer not just "which model is best" but "what do you give up by going cheaper, and is the cheap tier good enough for builder tasks?"
-  - **Anthropic:** Claude **Opus 4.6** (flagship, primary system under test) and Claude **Haiku 4.5** (budget tier). Sonnet 4.6 is an optional mid-tier third point.
-  - **OpenAI:** **GPT-5.5** (flagship agentic-coding model) and **GPT-5.4-mini** (budget tier). The coding-tuned GPT-5.3-Codex line is a documented alternative if a Codex-native comparison is preferred.
-  - **Google:** **Gemini 3.5 Pro** (flagship, deep-reasoning tier, shipping June 2026) and **Gemini 3.5 Flash** (budget tier). Interim, until 3.5 Pro ships: run **Gemini 3.5 Flash** as the flagship stand-in and **Gemini 3.1 Flash-Lite** as the budget tier, then promote everything one rung when Pro lands.
+- **Models in v1 (Anthropic only, three tiers):** Claude **Opus 4.6** (flagship, primary system under test), Claude **Sonnet 4.6** (mid-tier), and Claude **Haiku 4.5** (budget). Three points on the cost-capability curve answer the question the suite cares about: "what do you give up by going cheaper, and is the cheap tier good enough for builder tasks?"
+  - **Out of scope for v1 — API cost:** OpenAI (GPT-5.5 / GPT-5.4-mini) and Google (Gemini 3.5 Pro / Flash). Anthropic runs ride the author's Claude subscription through the Claude Agent SDK; competitor models would require pay-per-use API spend (as would Anthropic models driven through any second harness). The cross-lab comparison is the headline v2 extension, and the adapter layer is built so adding those models is a config change, not a rewrite.
   - Report **cost-per-solved-task** alongside pass rates for each tier.
 
 #### Reference pricing (per 1M tokens, input / output, as of June 2026)
 
-| Tier | Anthropic | OpenAI | Google |
-|------|-----------|--------|--------|
-| Flagship | Opus 4.6 — $5 / $25 | GPT-5.5 — $5 / $30 | Gemini 3.5 Pro — TBD at launch (Flash interim: $1.50 / $9) |
-| Budget | Haiku 4.5 — $1 / $5 | GPT-5.4-mini — $0.75 / $4.50 | Gemini 3.5 Flash — $1.50 / $9 (interim Flash-Lite: $0.25 / $1.50) |
+| Tier | Model | Price (in / out) |
+|------|-------|------------------|
+| Flagship | Claude Opus 4.6 | $5 / $25 |
+| Mid | Claude Sonnet 4.6 | $3 / $15 |
+| Budget | Claude Haiku 4.5 | $1 / $5 |
 
-> Prices move; confirm at run time. Batch/cached pricing can cut these substantially (e.g. Anthropic Batch API ~50% off, OpenAI Flex ~50% off), so note which pricing mode each run used. The headline metric is **cost-per-solved-task**, not raw token price: a flagship that solves twice as many tasks can be cheaper per solved task than a budget model that fails and retries.
+> Prices move; confirm at run time. Batch/cached pricing can cut these substantially (Anthropic Batch API ~50% off), so note which pricing mode each run used. The headline metric is **cost-per-solved-task**, not raw token price: a flagship that solves twice as many tasks can be cheaper per solved task than a budget model that fails and retries.
 >
-> Back-of-envelope for the full v1 matrix: ~26 tasks × 6 models × 2 harnesses × 3 attempts ≈ **~900 runs**; at $0.50–$2.00 per attempt that is roughly **$450–$1,900**. Flagship-tier-first halves it. Refine per-task in M1 before committing to the full run.
+> Back-of-envelope for the full v1 matrix: ~26 tasks × 3 models × 3 attempts ≈ **~230 runs**, all through the Claude Agent SDK. On the subscription the marginal dollar cost is ~$0, but the 5-hour/weekly usage windows throttle batches — spread the record run across several days, or switch it to an API key (~**$120–$470** at $0.50–$2.00 per attempt) for batch pricing, no throttling, and clean accounting. Either way, *report* imputed costs at list prices (Section 6).
 
 - **Reproducibility:** pinned model versions, sampling settings recorded per run (LLM APIs are not reliably seedable, and pass@k depends on attempt variance — record, don't pretend to fix), logged transcripts for every run. Each result also records the model's training cutoff vs. the task's publication date: public tasks become trainable the day they ship, and the private held-out split is the long-term contamination check.
 
-### Harness as a second factor (not just a caveat)
+### Harness note: why one harness is fine in v1, and the v2 second-factor plan
 
-Each lab ships its own agent harness (Claude Code, OpenAI Codex, Google Antigravity). Running each model inside its own harness measures *model + harness*, not the model — so a single-harness benchmark must either pick one harness (disadvantaging everyone else's model) or apologize for the gap. Builder-Bench instead treats the harness as a **second factor we measure**.
+Each lab ships its own agent harness (Claude Code, OpenAI Codex, Google Antigravity), and running a model inside a harness measures *model + harness*, not the model alone. That is only a fairness problem when labs are being *compared*: in an Anthropic-only v1, running Claude tiers through Claude's own Agent SDK disadvantages no one, so a single harness is methodologically clean. Within v1, harness and tasks are held constant and only the model tier varies — differences trace to the model.
 
-v1 runs a 2×N matrix: two neutral harnesses (**Claude Agent SDK**, **OpenAI Agents SDK**) × the model set. Holding the *task* and *metrics* constant, this lets the Scorecard separate three effects: the **model effect** (read down a column), the **harness effect** (read across a row), and the **home-field advantage** (a model in its own lab's harness vs. a rival's — the interaction, and the most actionable result for a model team).
-
-Honest limits, stated in the writeup:
-1. The two harnesses must be configured as equivalently as possible (same tools, budget, max-turns, task prompts). Residual differences in their defaults are confounds — neutrality is now something we *engineer*, not assume.
-2. **Gemini has no home field here** (its native harness, Antigravity, is not in the set), so the home-field contrast is clean only for Claude and GPT.
-3. The matrix roughly doubles run cost, so v1 starts **flagship-tier-only** and adds budget tiers if the signal warrants. A third (native) harness per lab is a v2 extension.
+When the cross-lab comparison arrives in v2, the harness becomes a **second factor we measure** rather than assume away: a 2×N matrix (Claude Agent SDK + OpenAI Agents SDK × the model set) separates the **model effect** (down a column), the **harness effect** (across a row), and the **home-field advantage** (a model in its own lab's harness vs. a rival's — the interaction, and the most actionable result for a model team). The known limits of that design, recorded now for then: the two harnesses must be configured as equivalently as possible (same tools, budget, max-turns, prompts — neutrality is engineered, not assumed); Gemini has no home field in that set (Antigravity is not included); and the matrix roughly doubles run cost.
 
 ---
 
@@ -253,8 +248,8 @@ Honest limits, stated in the writeup:
 
 The reference point is swebench.com — a good north star. The finished product has four surfaces; the first three are required for v1.
 
-1. **Leaderboard site — the public face.** A ranked table of models by overall pass@1, with category columns (A–D) and `cost-per-solved-task` sitting right next to the pass rate; each row links to that model's run details. Rankings use the **baseline harness** (Claude Agent SDK) so the headline number has one meaning; the harness effect is reported separately (Section 9). Backed by an in-repo results report that includes the judge-vs-human agreement number. Two deliberate differences from swebench.com: cost is a first-class column (SWE-bench largely ignores it), and the category breakdown exposes *where* a model wins — which is what turns a result into a recommendation.
-2. **GitHub repo — the substance.** The task suite, the two-harness runner, the graders, and contribution docs so others can submit tasks or models.
+1. **Leaderboard site — the public face.** A ranked table of models by overall pass@1, with category columns (A–D) and `cost-per-solved-task` sitting right next to the pass rate; each row links to that model's run details. All v1 runs use the single neutral harness (Section 9), so the headline number has one meaning. Backed by an in-repo results report that includes the judge-vs-human agreement number. Two deliberate differences from swebench.com: cost is a first-class column (SWE-bench largely ignores it), and the category breakdown exposes *where* a model wins — which is what turns a result into a recommendation.
+2. **GitHub repo — the substance.** The task suite, the neutral runner, the graders, and contribution docs so others can submit tasks or models.
 3. **Writeup — the credibility.** Methodology, the failure taxonomy with transcript excerpts as evidence, the harness-effect result (Section 9), and **three concrete, prioritized model-behavior recommendations** — the most important deliverable, because it demonstrates model taste rather than just engineering. The writeup doubles as the blog post and the interview artifact.
 4. **Dataset + per-run trajectories — the receipts.** Every task plus the full logged transcript of every run, so anyone can audit a pass or failure.
 
@@ -271,7 +266,7 @@ Do not position Builder-Bench as "SWE-bench but mine." Position it as the comple
 | Writeup | One report + blog post with taxonomy and 3 recommendations | Ongoing series; methodology paper |
 | Trajectories | Logged transcripts downloadable per run | Interactive in-browser trajectory viewer |
 | Submission flow | None (author runs everything) | Hosted submission + validation pipeline |
-| Coverage | ~26 tasks across A–D (Long Haul at the lite tier), 6 models (3 labs × 2 tiers) × 2 harnesses, flagship tier first | Good Taste (E), Long-Haul-hard multi-session tasks, native (third) harness per lab, more labs/tiers |
+| Coverage | ~26 tasks across A–D (Long Haul at the lite tier), 3 Anthropic tiers (Opus / Sonnet / Haiku), single harness | Good Taste (E), Long-Haul-hard multi-session tasks, cross-lab models (GPT, Gemini) + the second-harness matrix, native harness per lab |
 
 > v1 is intentionally a static, self-run artifact: no submission pipeline, no hosting ops. That burden is only worth taking on if the project gains traction.
 
@@ -287,7 +282,7 @@ Do not position Builder-Bench as "SWE-bench but mine." Position it as the comple
 | M3: Full suite + run | Remaining Vague Ask tasks, 1 to 2 more Long-Haul-lite tasks, run all models, collect results | Weekend 4 |
 | M4: Writeup + publish | Taxonomy, recommendations, PAI long-horizon case study, blog post, repo polish, launch | Weekend 5 |
 
-> Target: a credible v1 in about 4 to 5 weekends. If time runs short, the pre-agreed cuts, in order: the second budget tier, then the second harness — never the writeup, and never below one competitor flagship (Goal 3 requires at least three models, so a one-lab benchmark is not a valid fallback). (Long-Haul-hard is already deferred to v2; see Section 5.)
+> Target: a credible v1 in about 4 to 5 weekends. If time runs short, the pre-agreed cut is the Sonnet mid-tier — Opus vs. Haiku still gives the cost-capability contrast — never the writeup. (Long-Haul-hard is already deferred to v2, and the cross-lab comparison is already out of scope; see Sections 5 and 9.)
 
 ---
 
@@ -313,9 +308,9 @@ Do not position Builder-Bench as "SWE-bench but mine." Position it as the comple
 |------|------------|
 | Tasks too easy or too hard (no signal) | Pilot each task on one model first; tune difficulty before scaling the run |
 | LLM judge is unreliable | Validate against human labels before trusting it; keep programmatic checks as the primary grader |
-| Scope creep (too many tasks/categories) | Hard-cap v1 at 30 tasks; pre-agreed cut list in Section 11 (second budget tier, then second harness) |
+| Scope creep (too many tasks/categories) | Hard-cap v1 at 30 tasks; pre-agreed cut in Section 11 (Sonnet mid-tier) |
 | Reproducibility breaks across machines | Docker + pinned versions + logged transcripts from day one |
-| Cost of running full suite across models | Order-of-magnitude estimate up front (~$450–$1,900 full matrix, Section 9); refine per-task in M1 and budget before the full run |
+| Subscription usage windows throttle the record run | ~230 runs ride the Claude subscription's 5-hour/weekly limits; spread batches across days, or switch the record run to an API key (~$120–$470, Section 9) for batch pricing and clean accounting |
 
 ---
 
@@ -323,7 +318,7 @@ Do not position Builder-Bench as "SWE-bench but mine." Position it as the comple
 
 The decisions live in their home sections; this list records that each question was asked and closed.
 
-- ~~Which competitor models, and is API access straightforward?~~ **Resolved:** two tiers per lab across three labs, run through two neutral harnesses as a measured second factor, flagship tier first. Model matrix and pricing in **Section 9**.
+- ~~Which competitor models, and is API access straightforward?~~ **Re-resolved (June 2026): descoped.** v1 is Anthropic-only — Opus / Sonnet / Haiku through the Claude Agent SDK, covered by the author's subscription. OpenAI and Gemini models, and the second-harness matrix that only makes sense with them, are out of scope for v1 due to API cost; together they are the headline v2 extension. Details in **Section 9**.
 - ~~How many human labels are enough to trust the judge?~~ **Resolved:** hand-label the entire subjective subset (~50 to 70 transcripts), validate to Cohen's kappa >= 0.7 against a human-human ceiling, and freeze a gold regression set. Full protocol in **Section 6**.
 - ~~Should Long Haul ship in v1 or move to v2?~~ **Resolved:** split it — Long-Haul-lite ships in v1, Long-Haul-hard (multi-session, context resets) is deferred to v2 behind a firm line. Tiers in **Section 5**.
 - ~~What license and contribution model?~~ **Resolved (the one decision not recorded elsewhere in this PRD):**

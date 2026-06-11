@@ -30,7 +30,7 @@ M0 proves the neutral runner works end to end on one task with a clean programma
 
 - The repo scaffold + task schema.
 - A **neutral headless harness** (`harness/runner.py`) built on the Claude Agent SDK, with an
-  Anthropic adapter (other labs come in M3).
+  Anthropic adapter (other labs deferred to v2).
 - A **dual-backend sandbox** (`harness/sandbox.py`): Docker (spec-compliant isolation) with a
   local-tmpdir fallback so the runner executes even without Docker installed.
 - Task **b-01** ("dedupe by company, not by location") — a single-session, programmatically
@@ -128,8 +128,8 @@ writes (`{workdir, transcript, final_text, ...}`) and prints a single JSON objec
 
 > The PRD targets `opus-4.6`; that exact id is not available in the current environment, so
 > the Anthropic aliases map to the latest shipping ids. Re-pin to the PRD ids when running for
-> record. OpenAI and Google adapters arrive in M3, along with a second harness (the OpenAI
-> Agents SDK) so the harness effect is measured rather than assumed away (PRD §9).
+> record. v1 is Anthropic-only (Opus / Sonnet / Haiku); OpenAI and Gemini models, plus a
+> second harness to measure the harness effect, are deferred to v2 for API-cost reasons (PRD §9).
 
 ## Failure taxonomy
 
@@ -144,7 +144,7 @@ designed to surface `vision-drift` and `silent-assumptions` when the early dedup
 | **M0** ✅ | Scaffold, schema, dual-backend runner, b-01 end to end |
 | M1 | 10–12 tasks across the Full Build and Messy World categories with graders |
 | M2 | LLM judge + human-labeled validation set + agreement (Cohen's κ ≥ 0.7) report |
-| M3 | Remaining Vague Ask tasks, 1–2 more Long-Haul-lite tasks, all model adapters, full run |
+| M3 | Remaining Vague Ask tasks, 1–2 more Long-Haul-lite tasks, full three-tier run |
 | M4 | Writeup (taxonomy + 3 recommendations + PAI case study), blog post, static site, launch |
 
 ## License
