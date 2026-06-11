@@ -282,6 +282,10 @@ counting semantics), with the task's stated rule being one side of it — not "t
 
 ## 5. Actions this evidence suggests
 
+> **Status:** items 1–4 were applied across the docs (PRD §5/§7/§8, task-backlog,
+> sample-tasks, b-01 manifest, README, CONTRIBUTING) on June 11, 2026. Item 5 guides the
+> M4 writeup.
+
 1. **PRD §7:** add `fabricated-data` as a seventh failure mode (three receipts above).
 2. **PRD §5 / task-backlog / b-01 provenance:** reword "PAI's real dedup decision" →
    "PAI's real dedup *debate*" (the final ruling was count-per-posting; the task's stated

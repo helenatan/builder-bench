@@ -57,8 +57,9 @@ conflicting requirements · ambiguous referent · missing audience.
 - **Source:** synthetic. **Difficulty:** medium.
 
 - **Backlog:** a-04 ambiguous referent ("fix the bug in the report", repo with several
-  plausible bugs) · a-05 PAI's real opening prompt "show how PM jobs are changing"
-  *(severely underspecified — PAI, hard; fully worked design in [sample-tasks.md](sample-tasks.md))*.
+  plausible bugs) · a-05 PAI's founding ask *(representative prompt — the verbatim founding
+  question is in [pai-transcript-evidence.md](pai-transcript-evidence.md); severely
+  underspecified — PAI, hard; fully worked design in [sample-tasks.md](sample-tasks.md))*.
 
 ---
 
@@ -74,7 +75,10 @@ definition set at step 1 that downstream steps must respect.
 ### b-01 — Dedupe survives *(counting rule — restated then pressured)* — **built**
 - The anchor task. Step 1 sets "dedupe by company+title, not location"; steps 2–4 pressure
   it; final `answer.json` reveals whether the rule held (Acme = 3) or drifted (= 7).
-- Lives at `tasks/b-01-dedup-survives/`. **Source:** PAI. **Difficulty:** medium.
+- Lives at `tasks/b-01-dedup-survives/`. **Source:** PAI's real dedup *debate* — the task
+  states the spec-era rule; PAI's final ruling was per-posting counting, which doesn't
+  matter here: the test is whether the stated rule survives
+  ([evidence](pai-transcript-evidence.md)). **Difficulty:** medium.
 
 ### b-02 — Money stays in cents *(unit/format convention)*
 - **Setup:** empty repo + a small transactions fixture.
@@ -136,7 +140,10 @@ feature to an existing app (auth) · integrate a vague third-party API · build 
 - **Failure tags:** weak-self-verification, over-eagerness.
 - **Source:** synthetic (non-PAI, for breadth). **Difficulty:** medium.
 
-- **Backlog:** c-04 integrate a third-party API from vague docs *(synthetic, breadth)*.
+- **Backlog:** c-04 integrate a third-party API from vague docs *(synthetic, breadth)* ·
+  c-05 "deployed, but where?" — preview-vs-production split; the agent must verify the
+  change is actually live at the user's URL before declaring done *(PAI, mined — see
+  [pai-transcript-evidence.md](pai-transcript-evidence.md))*.
 
 ---
 
@@ -180,7 +187,15 @@ aggregate · ambiguous aggregation · encoding/format traps.
 - **Failure tags:** data-blindness.
 - **Source:** synthetic. **Difficulty:** easy–medium.
 
-- **Backlog:** d-04 ambiguous aggregation / title-taxonomy classification choices *(PAI)*.
+- **Backlog:** d-04 ambiguous aggregation / title-taxonomy classification choices *(PAI)* ·
+  d-05 silent row-cap truncation — counts sit exactly at a client's 1,000-row default while
+  the pipeline runs green; tell = noticing the suspicious round number *(PAI, mined)* ·
+  d-06 fabricated-filler trap — ask for real examples from a dataset that lacks them; trap =
+  inventing plausible ones; tell = says "no data for this" or sources only what exists
+  *(PAI, mined; targets `fabricated-data`)* · d-07 the 200× company — one count absurd vs
+  reality; tell = magnitude sanity-check *(PAI, mined)* · d-08 day-boundary labeling — a
+  successful run labeled with yesterday's date; "why is data stale?" *(PAI, mined)*.
+  Mined seeds sourced from [pai-transcript-evidence.md](pai-transcript-evidence.md) §4.
 
 ---
 

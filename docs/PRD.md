@@ -99,7 +99,7 @@ Deliberately ambiguous requests; the difficulty is interpreting the **Goal**.
 - **Examples:** "Build me a tracker for my reading" with no schema; "Make this faster" with no target; conflicting requirements in the same prompt.
 - **What it probes:** does the agent ask the right clarifying question, state assumptions explicitly, or silently guess?
 - **Graded on:** the **Transcript** (the clarifying behavior) — judge. In v1 the grade covers the question/assumption turn; any scripted "user reply" is just a fixed next prompt-step, because the harness does not branch on whether the agent asked. (True conditional replies are a v2 harness feature.)
-- **PAI leverage:** moderate. PAI's real starting prompt ("show how PM jobs are changing") was genuinely underspecified — the author documented nearly jumping to implementation before stepping back. Extract that *pattern* into 1 to 2 standalone tasks; round out the category with non-data tasks so it does not read as data-only.
+- **PAI leverage:** moderate. PAI's founding ask — *"Is AI eliminating PM roles, transforming them, or creating new ones?"* (its PRD v0.8; the true first prompt predates the transcripts) — was genuinely underspecified, and the author documented nearly jumping to implementation before stepping back. Extract that *pattern* into 1 to 2 standalone tasks; round out the category with non-data tasks so it does not read as data-only.
 
 ### Category B — Long Haul *(the hard part: the Goal, holding over time · "hold the line")*
 
@@ -108,7 +108,7 @@ Builds where the vision or a key requirement is stated once at the start and mus
 - **Examples:** "dedupe by company, not by location," stated at step 1 and still binding at step 4 (the built b-01 task); "store all money as integer cents" while later features tempt floating-dollar math.
 - **What it probes:** requirement drift — whether the original goal survives iteration (and, in v2, compaction and session resets).
 - **Graded on:** the **final Deliverable** (the requirement still holds) — programmatic, often a single number.
-- **PAI leverage:** high. PAI's real dedup decision seeds the Long-Haul-lite tasks. PAI was also built across many fragmented sessions (usage limits), and losing context on resume was the author's biggest documented frustration — a lived Long-Haul-hard failure, used as a case study in the v1 writeup and as the design source for the v2 suite.
+- **PAI leverage:** high. PAI's real dedup *debate* seeds the Long-Haul-lite tasks — b-01 states the spec-era rule (dedupe by company+title); the final PAI ruling went the other way (count per posting), which is fine: Long Haul tests whether a *stated* rule survives, not which rule is right ([evidence](pai-transcript-evidence.md)). PAI was also built across many fragmented sessions (usage limits), and losing context on resume was the author's biggest documented frustration — a lived Long-Haul-hard failure, used as a case study in the v1 writeup and as the design source for the v2 suite.
 
 Long Haul splits into two difficulty tiers:
 
@@ -179,7 +179,7 @@ The grades roll up into the **Scorecard**, reported per task and per category:
 
 ## 7. Failure taxonomy
 
-The taxonomy is mined from the author's real Claude Code transcripts (the PAI build — Section 8) and seeds both task design and result tagging. Six starting failure modes, each with a primary "home": the task category designed to provoke it. The categories and the taxonomy are two views of the same map — a failure can surface anywhere, but each has one place we deliberately hunt it.
+The taxonomy is mined from the author's real Claude Code transcripts (the PAI build — Section 8; the tagged evidence lives in [`docs/pai-transcript-evidence.md`](pai-transcript-evidence.md)) and seeds both task design and result tagging. Seven failure modes, each with a primary "home": the task category designed to provoke it. The categories and the taxonomy are two views of the same map — a failure can surface anywhere, but each has one place we deliberately hunt it.
 
 | Failure mode | What it looks like | Home category |
 |--------------|--------------------|---------------|
@@ -189,6 +189,7 @@ The taxonomy is mined from the author's real Claude Code transcripts (the PAI bu
 | **Weak self-verification** | does not check its own work; ships broken output | C — Full Build |
 | **Over-eagerness** | does more than asked, introducing scope or risk | C — Full Build · E — Good Taste |
 | **Data blindness** | does not notice data-quality problems | D — Messy World |
+| **Fabricated data** | invents plausible content (numbers, quotes, history) instead of flagging that real data is missing | D — Messy World |
 
 Each failure observed in a run gets tagged. The taxonomy is a deliverable in its own right: it is the bridge from "scores" to "here is what to change in the model."
 
@@ -207,6 +208,8 @@ PAI — the PM-AI Hiring Index, the author's web app built end to end with Claud
 **As a real-world case study for Long Haul.** PAI was built across many fragmented sessions because of usage limits, and losing context on session resume was the author's biggest documented frustration. That is a lived long-horizon coherence failure that can carry the Long Haul section even before full automation exists.
 
 ### Transcript-tagging workflow
+
+**Status: done.** The pass ran over all 27 sessions (May 17 – June 7, 2026); the tagged evidence lives in [`docs/pai-transcript-evidence.md`](pai-transcript-evidence.md).
 
 A single pass over the PAI transcripts produces material for three deliverables at once. While reading, tag each notable moment with one or more of:
 

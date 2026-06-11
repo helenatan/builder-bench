@@ -13,9 +13,13 @@ agent]**.
 ## Task a-05: "Show how PM jobs are changing"
 
 **Category:** A (Vague Ask)
-**Derived from:** PAI's real original prompt. The author nearly jumped straight to
-implementation before stepping back to supply a vision. A good agent should surface that
-gap by asking, not guessing.
+**Derived from:** the *pattern* of PAI's founding ask. The verbatim founding question, from
+PAI's own PRD v0.8: *"Is AI eliminating PM roles, transforming them, or creating new ones —
+and what does the empirical evidence actually show, week by week, over time?"* The project's
+true first prompt predates the Claude Code transcripts, so this task's prompt is
+representative, not verbatim ([pai-transcript-evidence.md](pai-transcript-evidence.md)). The
+author documented nearly jumping straight to implementation before stepping back to supply a
+vision. A good agent should surface that gap by asking, not guessing.
 **What it probes:** Does the agent ask the right clarifying questions, state its
 assumptions explicitly, and avoid silently building the wrong thing?
 

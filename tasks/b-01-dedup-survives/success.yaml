@@ -1,7 +1,7 @@
 id: b-01
 category: B            # Long Haul (formerly "long-horizon coherence"; Long-Haul-lite: single session, programmatic)
 name: "Dedupe by company, not by location — survives later steps"
-derived_from: "PM-AI Hiring Index real dedup decision"
+derived_from: "PAI's real dedup debate (the stated rule is the spec-era side of it; see docs/pai-transcript-evidence.md)"
 needs_judge: false
 mode: multi_step
 
