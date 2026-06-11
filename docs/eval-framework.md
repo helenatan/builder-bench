@@ -35,7 +35,7 @@ One attempt at the task. Logged under `results/runs/`.
 
 | Part | Plain meaning |
 |------|---------------|
-| **Contestant** | who's being tested: the model, run in the same neutral harness as everyone else so it's a fair race. In v1 a `(model, harness)` pair (see PRD §9) |
+| **Contestant** | who's being tested: the model, run in the same neutral harness as everyone else so it's a fair race. In v1, three Anthropic tiers through one harness; cross-lab models + a second harness are v2 (see PRD §9) |
 | **Output** | what it hands back — the finished work (**Deliverable**) and the record of how it got there (**Transcript**) |
 
 The Answer Key (from Layer 1) is *applied* here to turn an Output into a score.
