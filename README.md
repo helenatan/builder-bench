@@ -4,7 +4,7 @@
 well coding agents take a person from a rough idea to a working product.**
 
 Existing benchmarks (e.g. SWE-bench) test agents on engineer-written GitHub issues inside
-mature codebases. Builder-Bench measures the fastest-growing way people actually use coding
+mature codebases. Builder-Bench measures a rapidly growing way people actually use coding
 agents: a PM, analyst, or indie builder describing what they want and expecting the agent to
 build it end to end. Four task categories — **A** Vague Ask (underspecified requests), **B** Long Haul (coherence
 over a long build), **C** Full Build (spec-to-product), **D** Messy World (data judgment) — graded with programmatic checks plus

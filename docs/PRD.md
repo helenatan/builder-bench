@@ -3,7 +3,7 @@
 **An open-source agentic eval suite for coding agents, built around the "non-engineer builder" persona.**
 
 Author: Helena Tan
-Status: Draft v1
+Status: v1 — in build (M0 shipped; all open questions resolved, see Section 14)
 Last updated: June 2026
 
 ---
@@ -12,7 +12,7 @@ Last updated: June 2026
 
 Builder-Bench measures how well coding agents (Claude Code, Codex, and others) take a person from a rough idea to a working, shipped product, the way a PM, designer, or analyst actually works, rather than the way an engineer fixes bugs in an existing repo.
 
-Existing benchmarks like SWE-bench test agents on engineer-written GitHub issues inside mature codebases. That misses the fastest-growing way people use coding agents today: a non-engineer describing what they want and expecting the agent to build it end to end. Builder-Bench fills that gap with a graded task suite, a failure taxonomy mined from real transcripts, and a writeup that translates results into concrete recommendations for a model team.
+Existing benchmarks like SWE-bench test agents on engineer-written GitHub issues inside mature codebases. That misses a rapidly growing way people use coding agents: a non-engineer describing what they want and expecting the agent to build it end to end. (The writeup should back this growth claim with usage data — e.g. the Anthropic Economic Index or equivalent published usage breakdowns — rather than assert it.) Builder-Bench fills that gap with a graded task suite, a failure taxonomy mined from real transcripts, and a writeup that translates results into concrete recommendations for a model team.
 
 This is a portfolio project with two audiences: the open-source community (a useful benchmark) and Anthropic's Claude Code model performance team (evidence of eval-building skill and model taste).
 
@@ -49,7 +49,7 @@ No public benchmark measures this well. Building one demonstrates a thesis the C
 | User | What they get |
 |------|---------------|
 | Model/eval teams | A diagnostic suite that surfaces builder-persona failure modes and a methodology they can extend |
-| Coding-agent users (PMs, analysts, indie builders) | Evidence of which agents handle spec-to-product work, and how reliably |
+| Coding-agent users (PMs, analysts, indie builders) | Evidence of which agents handle builder work (vague ask → working product), and how reliably |
 | The author | A public artifact proving eval-building skill and refined model taste |
 
 ---
@@ -88,7 +88,7 @@ Deliberately ambiguous requests; the difficulty is interpreting the **Goal**.
 
 - **Examples:** "Build me a tracker for my reading" with no schema; "Make this faster" with no target; conflicting requirements in the same prompt.
 - **What it probes:** does the agent ask the right clarifying question, state assumptions explicitly, or silently guess?
-- **Graded on:** the **Transcript** (the clarifying behavior) — judge. Often interactive, with a scripted user reply so the grade can cover what the agent does *after* asking.
+- **Graded on:** the **Transcript** (the clarifying behavior) — judge. In v1 the grade covers the question/assumption turn; any scripted "user reply" is just a fixed next prompt-step, because the harness does not branch on whether the agent asked. (True conditional replies are a v2 harness feature.)
 - **PAI leverage:** moderate. PAI's real starting prompt ("show how PM jobs are changing") was genuinely underspecified — the author documented nearly jumping to implementation before stepping back. Extract that *pattern* into 1 to 2 standalone tasks; round out the category with non-data tasks so it does not read as data-only.
 
 ### Category B — Long Haul *(the hard part: the Goal, holding over time · "hold the line")*
@@ -113,7 +113,7 @@ Build a working artifact from a short PRD or plain-language request.
 
 - **Examples:** PRD to a working web app with a database; CSV of messy data to a clean pipeline plus dashboard; add authentication to an existing small app; integrate a third-party API given only vague docs.
 - **What it probes:** end-to-end execution, sensible defaults, shipping something that actually runs.
-- **Graded on:** the **Deliverable** (does it run, match the schema) — programmatic, plus an optional quality-rubric layer that previews Good Taste (Category E).
+- **Graded on:** the **Deliverable** (does it run, match the schema) — programmatic, plus an optional quality-rubric layer that previews Good Taste (Category E). The quality layer feeds the writeup only; it is not a leaderboard column in v1.
 - **Boundary:** keep the input data *clean* here; a data trap would make it a Messy World task instead.
 - **PAI leverage:** high. PAI was itself a PRD-to-web-app-with-pipeline build; reconstruct a clean slice (e.g. "ingest job postings and dedupe them") as a task with known fixtures and a known definition of done.
 
@@ -154,13 +154,16 @@ Grading implements the **Answer Key** from Section 5, and it splits along the tw
 - Label ~15 to 20 cases twice to establish a human-human ceiling (the judge is not expected to beat it).
 - If the judge falls short, fix the rubric, not the judge model, and re-label.
 - Read every judge-vs-human disagreement to surface systematic bias (good writeup material).
+- **Guard against self-preference:** name the judge model in the report, and stratify judge-vs-human agreement **by contestant model** — a Claude judge must not be systematically kinder to Claude transcripts. If a per-model skew appears, report it and rebalance the rubric.
 - Freeze a ~20 to 30 case gold set as a regression check for rubric or judge-model changes.
 
 The grades roll up into the **Scorecard**, reported per task and per category:
 
 - **pass@1** and **pass@3** (single attempt and best of three)
-- **Cost per solved task** (tokens and dollars)
+- **Cost per solved task** — defined as total spend on **all** attempts, including failed ones, divided by the number of tasks solved; failed retries are part of a model's real cost. Undefined when a model solves zero tasks in a slice (shown as "—", never ranked). The canonical figure comes from the baseline-harness runs; per-harness costs appear in the harness analysis (Section 9).
 - **Failure mode tags** (from the taxonomy in Section 7)
+
+**Reading the numbers honestly.** With 5 to 8 tasks per category, a single task flipping moves a category pass rate by 12 to 20 points — so per-category results are directional, not rankings. The report shows confidence intervals on every pass rate, declines to rank models whose intervals overlap, and treats overall pass@1 across the full suite as the primary comparison. Where a category-level claim feeds a recommendation, run extra attempts on that cell before making it.
 
 ---
 
@@ -228,8 +231,10 @@ A single pass over the PAI transcripts produces material for three deliverables 
 | Budget | Haiku 4.5 — $1 / $5 | GPT-5.4-mini — $0.75 / $4.50 | Gemini 3.5 Flash — $1.50 / $9 (interim Flash-Lite: $0.25 / $1.50) |
 
 > Prices move; confirm at run time. Batch/cached pricing can cut these substantially (e.g. Anthropic Batch API ~50% off, OpenAI Flex ~50% off), so note which pricing mode each run used. The headline metric is **cost-per-solved-task**, not raw token price: a flagship that solves twice as many tasks can be cheaper per solved task than a budget model that fails and retries.
+>
+> Back-of-envelope for the full v1 matrix: ~26 tasks × 6 models × 2 harnesses × 3 attempts ≈ **~900 runs**; at $0.50–$2.00 per attempt that is roughly **$450–$1,900**. Flagship-tier-first halves it. Refine per-task in M1 before committing to the full run.
 
-- **Reproducibility:** pinned model versions, fixed seeds where possible, logged transcripts for every run.
+- **Reproducibility:** pinned model versions, sampling settings recorded per run (LLM APIs are not reliably seedable, and pass@k depends on attempt variance — record, don't pretend to fix), logged transcripts for every run. Each result also records the model's training cutoff vs. the task's publication date: public tasks become trainable the day they ship, and the private held-out split is the long-term contamination check.
 
 ### Harness as a second factor (not just a caveat)
 
@@ -248,7 +253,7 @@ Honest limits, stated in the writeup:
 
 The reference point is swebench.com — a good north star. The finished product has four surfaces; the first three are required for v1.
 
-1. **Leaderboard site — the public face.** A ranked table of models by overall pass@1, with category columns (A–D) and `cost-per-solved-task` sitting right next to the pass rate; each row links to that model's run details. Backed by an in-repo results report that includes the judge-vs-human agreement number. Two deliberate differences from swebench.com: cost is a first-class column (SWE-bench largely ignores it), and the category breakdown exposes *where* a model wins — which is what turns a result into a recommendation.
+1. **Leaderboard site — the public face.** A ranked table of models by overall pass@1, with category columns (A–D) and `cost-per-solved-task` sitting right next to the pass rate; each row links to that model's run details. Rankings use the **baseline harness** (Claude Agent SDK) so the headline number has one meaning; the harness effect is reported separately (Section 9). Backed by an in-repo results report that includes the judge-vs-human agreement number. Two deliberate differences from swebench.com: cost is a first-class column (SWE-bench largely ignores it), and the category breakdown exposes *where* a model wins — which is what turns a result into a recommendation.
 2. **GitHub repo — the substance.** The task suite, the two-harness runner, the graders, and contribution docs so others can submit tasks or models.
 3. **Writeup — the credibility.** Methodology, the failure taxonomy with transcript excerpts as evidence, the harness-effect result (Section 9), and **three concrete, prioritized model-behavior recommendations** — the most important deliverable, because it demonstrates model taste rather than just engineering. The writeup doubles as the blog post and the interview artifact.
 4. **Dataset + per-run trajectories — the receipts.** Every task plus the full logged transcript of every run, so anyone can audit a pass or failure.
@@ -277,12 +282,12 @@ Do not position Builder-Bench as "SWE-bench but mine." Position it as the comple
 | Milestone | Scope | Rough effort |
 |-----------|-------|--------------|
 | M0: Scaffold | Repo, task schema, Docker runner, plus one Long-Haul-lite task (b-01) end to end to validate the multi-step runner early | Weekend 1 |
-| M1: Core tasks | 10 to 12 tasks across the Full Build and Messy World categories with graders | Weekend 2 |
+| M1: Core tasks | 10 to 12 tasks across the Full Build and Messy World categories with graders, built in priority order so a partial weekend still yields a coherent subset | Weekend 2 |
 | M2: Judge + validate | LLM judge, human-labeled validation set, agreement reported | Weekend 3 |
 | M3: Full suite + run | Remaining Vague Ask tasks, 1 to 2 more Long-Haul-lite tasks, run all models, collect results | Weekend 4 |
 | M4: Writeup + publish | Taxonomy, recommendations, PAI long-horizon case study, blog post, repo polish, launch | Weekend 5 |
 
-> Target: a credible v1 in about 4 to 5 weekends. If time runs short, the pre-agreed cuts are the competitor-model comparison and the second budget tier — never the writeup. (Long-Haul-hard is already deferred to v2; see Section 5.)
+> Target: a credible v1 in about 4 to 5 weekends. If time runs short, the pre-agreed cuts, in order: the second budget tier, then the second harness — never the writeup, and never below one competitor flagship (Goal 3 requires at least three models, so a one-lab benchmark is not a valid fallback). (Long-Haul-hard is already deferred to v2; see Section 5.)
 
 ---
 
@@ -308,9 +313,9 @@ Do not position Builder-Bench as "SWE-bench but mine." Position it as the comple
 |------|------------|
 | Tasks too easy or too hard (no signal) | Pilot each task on one model first; tune difficulty before scaling the run |
 | LLM judge is unreliable | Validate against human labels before trusting it; keep programmatic checks as the primary grader |
-| Scope creep (too many tasks/categories) | Hard-cap v1 at 30 tasks; pre-agreed cut list in Section 11 (competitor comparison, second budget tier) |
+| Scope creep (too many tasks/categories) | Hard-cap v1 at 30 tasks; pre-agreed cut list in Section 11 (second budget tier, then second harness) |
 | Reproducibility breaks across machines | Docker + pinned versions + logged transcripts from day one |
-| Cost of running full suite across models | Estimate token cost per task in M1; budget before the full run |
+| Cost of running full suite across models | Order-of-magnitude estimate up front (~$450–$1,900 full matrix, Section 9); refine per-task in M1 and budget before the full run |
 
 ---
 
