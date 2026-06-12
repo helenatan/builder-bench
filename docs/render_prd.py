@@ -72,8 +72,18 @@ th { background: var(--th); font-weight: 650; position: sticky; top: 0; }
 tr:nth-child(even) td { background: var(--zebra); }
 tr:last-child td { border-bottom: none; }
 td:not(:last-child), th:not(:last-child) { border-right: 1px solid var(--border); }
-/* wide tables (the §5 master table) get room and a minimum width to stay legible */
-.table-wrap.wide table { min-width: 1080px; }
+
+/* wide tables (the §5 master table) render as stacked cards instead — fits any screen */
+.cat-card { border: 1px solid var(--border); border-radius: 10px; background: var(--soft);
+            padding: 1.1rem 1.3rem; margin: 1.2rem 0; }
+.cat-card > .cat-title { margin: 0 0 .75rem; font-size: 1.06rem; line-height: 1.4; }
+.cat-card dl { display: grid; grid-template-columns: 12rem 1fr; gap: .5rem 1.2rem; margin: 0; }
+.cat-card dt { font-weight: 650; color: var(--muted); }
+.cat-card dd { margin: 0; }
+@media (max-width: 640px) {
+  .cat-card dl { grid-template-columns: 1fr; gap: .15rem; }
+  .cat-card dd { margin-bottom: .6rem; }
+}
 
 .toc { background: var(--soft); border: 1px solid var(--border); border-radius: 8px;
        padding: 1rem 1.4rem; margin: 1.6rem 0 2.4rem; }
@@ -97,11 +107,16 @@ def main() -> None:
     # ~~strikethrough~~ -> <del> (not covered by the 'extra' extension)
     text = re.sub(r"~~(.+?)~~", r"<del>\1</del>", text, flags=re.S)
 
+    # keep the byline on three lines (markdown collapses single newlines)
+    text = text.replace("Author: Helena Tan\nStatus:", "Author: Helena Tan<br>\nStatus:")
+    text = re.sub(r"\)\nLast updated:", ")<br>\nLast updated:", text)
+
     # table of contents placeholder after the front-matter block (first ---)
     text = text.replace("---\n\n## 1.", "[TOC]\n\n## 1.", 1)
 
+    # toc_depth "2-2": a flat list of the ## sections only (no nesting under the h1)
     html = markdown.markdown(text, extensions=["extra", "toc"],
-                             extension_configs={"toc": {"toc_depth": "2"}})
+                             extension_configs={"toc": {"toc_depth": "2-2"}})
 
     # rewrite relative .md links so they work from the standalone HTML file
     def fix_link(m: re.Match) -> str:
@@ -110,13 +125,27 @@ def main() -> None:
         return f'href="{REPO_BLOB}/{path}"'
     html = re.sub(r'href="(?!https?://|#)([^"]+\.md)"', fix_link, html)
 
-    # wrap tables for horizontal scrolling; tag 5+ column tables as wide
-    def wrap_table(m: re.Match) -> str:
+    # normal tables get a scroll wrapper; 5+ column tables become stacked cards
+    def transform_table(m: re.Match) -> str:
         tbl = m.group(0)
-        cols = tbl.split("</tr>", 1)[0].count("<th>")
-        cls = "table-wrap wide" if cols >= 5 else "table-wrap"
-        return f'<div class="{cls}">{tbl}</div>'
-    html = re.sub(r"<table>.*?</table>", wrap_table, html, flags=re.S)
+        headers = re.findall(r"<th>(.*?)</th>", tbl, flags=re.S)
+        if len(headers) < 5:
+            return f'<div class="table-wrap">{tbl}</div>'
+        cards = []
+        for row in re.findall(r"<tr>(.*?)</tr>", tbl, flags=re.S):
+            cells = re.findall(r"<td>(.*?)</td>", row, flags=re.S)
+            if not cells:
+                continue  # header row
+            fields = "".join(
+                f"<dt>{h}</dt><dd>{c}</dd>"
+                for h, c in zip(headers[1:], cells[1:]) if c.strip() not in ("", "—")
+            )
+            cards.append(
+                f'<section class="cat-card"><p class="cat-title">{cells[0]}</p>'
+                f"<dl>{fields}</dl></section>"
+            )
+        return "\n".join(cards)
+    html = re.sub(r"<table>.*?</table>", transform_table, html, flags=re.S)
 
     OUT.write_text(f"""<!DOCTYPE html>
 <html lang="en">

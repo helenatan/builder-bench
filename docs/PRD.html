@@ -60,8 +60,18 @@ th { background: var(--th); font-weight: 650; position: sticky; top: 0; }
 tr:nth-child(even) td { background: var(--zebra); }
 tr:last-child td { border-bottom: none; }
 td:not(:last-child), th:not(:last-child) { border-right: 1px solid var(--border); }
-/* wide tables (the §5 master table) get room and a minimum width to stay legible */
-.table-wrap.wide table { min-width: 1080px; }
+
+/* wide tables (the §5 master table) render as stacked cards instead — fits any screen */
+.cat-card { border: 1px solid var(--border); border-radius: 10px; background: var(--soft);
+            padding: 1.1rem 1.3rem; margin: 1.2rem 0; }
+.cat-card > .cat-title { margin: 0 0 .75rem; font-size: 1.06rem; line-height: 1.4; }
+.cat-card dl { display: grid; grid-template-columns: 12rem 1fr; gap: .5rem 1.2rem; margin: 0; }
+.cat-card dt { font-weight: 650; color: var(--muted); }
+.cat-card dd { margin: 0; }
+@media (max-width: 640px) {
+  .cat-card dl { grid-template-columns: 1fr; gap: .15rem; }
+  .cat-card dd { margin-bottom: .6rem; }
+}
 
 .toc { background: var(--soft); border: 1px solid var(--border); border-radius: 8px;
        padding: 1rem 1.4rem; margin: 1.6rem 0 2.4rem; }
@@ -82,12 +92,11 @@ td:not(:last-child), th:not(:last-child) { border-right: 1px solid var(--border)
 <main>
 <h1 id="builder-bench-prd">Builder-Bench: PRD</h1>
 <p><strong>An open-source agentic eval suite for coding agents, built around the "non-engineer builder" persona.</strong></p>
-<p>Author: Helena Tan
-Status: v1 — in build (M0 shipped; all open questions resolved, see Section 14)
+<p>Author: Helena Tan<br>
+Status: v1 — in build (M0 shipped; all open questions resolved, see Section 14)<br>
 Last updated: June 2026</p>
 <div class="toc">
 <ul>
-<li><a href="#builder-bench-prd">Builder-Bench: PRD</a><ul>
 <li><a href="#1-summary">1. Summary</a></li>
 <li><a href="#2-goals-and-non-goals">2. Goals and non-goals</a></li>
 <li><a href="#3-why-this-matters-motivation">3. Why this matters (motivation)</a></li>
@@ -102,8 +111,6 @@ Last updated: June 2026</p>
 <li><a href="#12-success-criteria">12. Success criteria</a></li>
 <li><a href="#13-risks-and-mitigations">13. Risks and mitigations</a></li>
 <li><a href="#14-open-questions-all-resolved">14. Open questions — all resolved</a></li>
-</ul>
-</li>
 </ul>
 </div>
 <h2 id="1-summary">1. Summary</h2>
@@ -183,60 +190,11 @@ Last updated: June 2026</p>
 <p><strong>A category is named for which part carries the difficulty.</strong> (Full detail, including how the layers map onto the repo, in <a href="https://github.com/helenatan/builder-bench/blob/main/docs/eval-framework.md"><code>docs/eval-framework.md</code></a>.)</p>
 <p>There is one category per hard part — except the Goal, which gets two, because it can be hard in two different ways: unclear <em>now</em> (the agent must clarify it), or clear but easy to lose <em>over time</em> (the agent must hold onto it). That makes five categories:</p>
 <p>PAI in the last column is the PM-AI Hiring Index — the real product the author built end to end with Claude Code; Section 8 details what it contributes and the boundaries on reusing it.</p>
-<div class="table-wrap wide"><table>
-<thead>
-<tr>
-<th>Category <em>(the hard part · the verb)</em></th>
-<th>What it is — and what it probes</th>
-<th>Examples</th>
-<th>Graded on</th>
-<th>v1 scope</th>
-<th>PAI leverage</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>A — Vague Ask</strong> <em>(the Goal, while it's unclear · "clarify it")</em></td>
-<td>Deliberately ambiguous requests. Does the agent ask the right clarifying question, state assumptions explicitly, or silently guess?</td>
-<td>"Build me a tracker for my reading" (no schema); "Make this faster" (no target); conflicting requirements in one prompt</td>
-<td>The <strong>Transcript</strong> (the clarifying behavior) — judge. v1 grades the question/assumption turn; a scripted "user reply" is a fixed next prompt-step (the harness doesn't branch; true conditional replies are v2)</td>
-<td>Ship — cheap, high-value</td>
-<td>Moderate. PAI's founding ask — <em>"Is AI eliminating PM roles, transforming them, or creating new ones?"</em> (its PRD v0.8; the true first prompt predates the transcripts) — was genuinely underspecified; extract the <em>pattern</em> into 1–2 tasks, round out with non-data tasks</td>
-</tr>
-<tr>
-<td><strong>B — Long Haul</strong> <em>(the Goal, holding over time · "hold the line")</em></td>
-<td>A vision or key requirement stated once at the start must survive later steps. Probes requirement drift (and, in v2, compaction and session resets)</td>
-<td>"Dedupe by company, not by location," stated at step 1 and still binding at step 4 (the built b-01); "store all money as integer cents" while later features tempt floating-dollar math</td>
-<td>The <strong>final Deliverable</strong> (the requirement still holds) — programmatic, often a single number</td>
-<td>Ship 2–3 <strong>lite</strong> tasks; build b-01 early (it validates the multi-step runner). The <strong>hard</strong> tier → v2 (see tiers note below)</td>
-<td>High. PAI's real dedup <em>debate</em> seeds the lite tasks — b-01 states the spec-era rule; the final PAI ruling went the other way, which is fine: the test is whether a <em>stated</em> rule survives (<a href="https://github.com/helenatan/builder-bench/blob/main/docs/pai-transcript-evidence.md">evidence</a>). The fragmented-session resume failures become the writeup case study and the v2 design source</td>
-</tr>
-<tr>
-<td><strong>C — Full Build</strong> <em>(the Output · "build it")</em></td>
-<td>Build a working artifact from a short PRD or plain-language request. Probes end-to-end execution, sensible defaults, shipping something that actually runs</td>
-<td>PRD → web app with a database; messy CSV → clean pipeline + dashboard; add auth to a small app; integrate a third-party API from vague docs</td>
-<td>The <strong>Deliverable</strong> (does it run, match the schema) — programmatic, plus an optional quality-rubric layer that previews E (writeup only, not a leaderboard column). Keep input data <em>clean</em> — a data trap would make it Messy World</td>
-<td>Core — most automatable, clearest signal</td>
-<td>High. PAI was itself a PRD-to-web-app-with-pipeline build; reconstruct a clean slice (e.g. "ingest job postings and dedupe them") with known fixtures and a known definition of done</td>
-</tr>
-<tr>
-<td><strong>D — Messy World</strong> <em>(the Setup · "notice it")</em></td>
-<td>Correctness requires noticing data-quality problems, not just writing code — the trap lives in the data, and the agent is <em>not</em> told to watch for it. Probes unprompted flagging, and defending choices when challenged</td>
-<td>The same record under multiple keys ("one job posted in five locations"); two dashboard views disagreeing by an order of magnitude; ambiguous aggregation choices</td>
-<td>The <strong>Deliverable</strong> (right answer) + the <strong>Transcript</strong> (did it flag the issue) — hybrid</td>
-<td>Core — most automatable, clearest signal</td>
-<td>Highest. Dedup-by-location, the order-of-magnitude discrepancy, and the title-taxonomy choices are real PAI edge cases with known answers and known traps; source most of D from PAI</td>
-</tr>
-<tr>
-<td><strong>E — Good Taste</strong> <em>(the Answer Key · "judge it")</em></td>
-<td>A <em>working</em> answer is not enough: "correct" is subtle or contested, and the agent must exercise judgment. Probes quality, not just function</td>
-<td>Two plausible answers conflict — pick the right one and defend it; a product/design call where several options work but one is clearly better</td>
-<td>The <strong>Deliverable</strong> (for quality) + the <strong>Transcript</strong> (for reasoning) — judge</td>
-<td><strong>v2</strong> — hardest to grade reliably; previewed in v1 via C's quality layer; most directly serves the "model taste" deliverable (Section 10)</td>
-<td>—</td>
-</tr>
-</tbody>
-</table></div>
+<section class="cat-card"><p class="cat-title"><strong>A — Vague Ask</strong> <em>(the Goal, while it's unclear · "clarify it")</em></p><dl><dt>What it is — and what it probes</dt><dd>Deliberately ambiguous requests. Does the agent ask the right clarifying question, state assumptions explicitly, or silently guess?</dd><dt>Examples</dt><dd>"Build me a tracker for my reading" (no schema); "Make this faster" (no target); conflicting requirements in one prompt</dd><dt>Graded on</dt><dd>The <strong>Transcript</strong> (the clarifying behavior) — judge. v1 grades the question/assumption turn; a scripted "user reply" is a fixed next prompt-step (the harness doesn't branch; true conditional replies are v2)</dd><dt>v1 scope</dt><dd>Ship — cheap, high-value</dd><dt>PAI leverage</dt><dd>Moderate. PAI's founding ask — <em>"Is AI eliminating PM roles, transforming them, or creating new ones?"</em> (its PRD v0.8; the true first prompt predates the transcripts) — was genuinely underspecified; extract the <em>pattern</em> into 1–2 tasks, round out with non-data tasks</dd></dl></section>
+<section class="cat-card"><p class="cat-title"><strong>B — Long Haul</strong> <em>(the Goal, holding over time · "hold the line")</em></p><dl><dt>What it is — and what it probes</dt><dd>A vision or key requirement stated once at the start must survive later steps. Probes requirement drift (and, in v2, compaction and session resets)</dd><dt>Examples</dt><dd>"Dedupe by company, not by location," stated at step 1 and still binding at step 4 (the built b-01); "store all money as integer cents" while later features tempt floating-dollar math</dd><dt>Graded on</dt><dd>The <strong>final Deliverable</strong> (the requirement still holds) — programmatic, often a single number</dd><dt>v1 scope</dt><dd>Ship 2–3 <strong>lite</strong> tasks; build b-01 early (it validates the multi-step runner). The <strong>hard</strong> tier → v2 (see tiers note below)</dd><dt>PAI leverage</dt><dd>High. PAI's real dedup <em>debate</em> seeds the lite tasks — b-01 states the spec-era rule; the final PAI ruling went the other way, which is fine: the test is whether a <em>stated</em> rule survives (<a href="https://github.com/helenatan/builder-bench/blob/main/docs/pai-transcript-evidence.md">evidence</a>). The fragmented-session resume failures become the writeup case study and the v2 design source</dd></dl></section>
+<section class="cat-card"><p class="cat-title"><strong>C — Full Build</strong> <em>(the Output · "build it")</em></p><dl><dt>What it is — and what it probes</dt><dd>Build a working artifact from a short PRD or plain-language request. Probes end-to-end execution, sensible defaults, shipping something that actually runs</dd><dt>Examples</dt><dd>PRD → web app with a database; messy CSV → clean pipeline + dashboard; add auth to a small app; integrate a third-party API from vague docs</dd><dt>Graded on</dt><dd>The <strong>Deliverable</strong> (does it run, match the schema) — programmatic, plus an optional quality-rubric layer that previews E (writeup only, not a leaderboard column). Keep input data <em>clean</em> — a data trap would make it Messy World</dd><dt>v1 scope</dt><dd>Core — most automatable, clearest signal</dd><dt>PAI leverage</dt><dd>High. PAI was itself a PRD-to-web-app-with-pipeline build; reconstruct a clean slice (e.g. "ingest job postings and dedupe them") with known fixtures and a known definition of done</dd></dl></section>
+<section class="cat-card"><p class="cat-title"><strong>D — Messy World</strong> <em>(the Setup · "notice it")</em></p><dl><dt>What it is — and what it probes</dt><dd>Correctness requires noticing data-quality problems, not just writing code — the trap lives in the data, and the agent is <em>not</em> told to watch for it. Probes unprompted flagging, and defending choices when challenged</dd><dt>Examples</dt><dd>The same record under multiple keys ("one job posted in five locations"); two dashboard views disagreeing by an order of magnitude; ambiguous aggregation choices</dd><dt>Graded on</dt><dd>The <strong>Deliverable</strong> (right answer) + the <strong>Transcript</strong> (did it flag the issue) — hybrid</dd><dt>v1 scope</dt><dd>Core — most automatable, clearest signal</dd><dt>PAI leverage</dt><dd>Highest. Dedup-by-location, the order-of-magnitude discrepancy, and the title-taxonomy choices are real PAI edge cases with known answers and known traps; source most of D from PAI</dd></dl></section>
+<section class="cat-card"><p class="cat-title"><strong>E — Good Taste</strong> <em>(the Answer Key · "judge it")</em></p><dl><dt>What it is — and what it probes</dt><dd>A <em>working</em> answer is not enough: "correct" is subtle or contested, and the agent must exercise judgment. Probes quality, not just function</dd><dt>Examples</dt><dd>Two plausible answers conflict — pick the right one and defend it; a product/design call where several options work but one is clearly better</dd><dt>Graded on</dt><dd>The <strong>Deliverable</strong> (for quality) + the <strong>Transcript</strong> (for reasoning) — judge</dd><dt>v1 scope</dt><dd><strong>v2</strong> — hardest to grade reliably; previewed in v1 via C's quality layer; most directly serves the "model taste" deliverable (Section 10)</dd></dl></section>
 <p>Notes on the table:</p>
 <ul>
 <li><strong>Long Haul's two tiers.</strong> <em>Lite</em> (v1, automatable): single session, one requirement stated at step 1, several more steps, a final programmatic check — no judge needed; b-01 is exactly this. <em>Hard</em> (v2, deferred): multi-session builds with a real context reset or compaction, requiring session-resume plumbing, harness instrumentation, and likely judge-assisted grading — the richest version, worth a proper v2 rather than a rushed corner. <strong>The line is firm:</strong> anything requiring session resume, compaction, or harness instrumentation is v2, full stop — this keeps lite from creeping into hard and blowing the timeline.</li>
