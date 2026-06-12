@@ -90,73 +90,21 @@ So where can a task's difficulty live? Not in the **Contestant** — that is *wh
 
 There is one category per hard part — except the Goal, which gets two, because it can be hard in two different ways: unclear *now* (the agent must clarify it), or clear but easy to lose *over time* (the agent must hold onto it). That makes five categories:
 
-| Category | The hard part |
-|----------|---------------|
-| **A — Vague Ask** | the Goal, while it's unclear |
-| **B — Long Haul** | the Goal, holding over time |
-| **C — Full Build** | the Output |
-| **D — Messy World** | the Setup |
-| **E — Good Taste** | the Answer Key |
+PAI in the last column is the PM-AI Hiring Index — the real product the author built end to end with Claude Code; Section 8 details what it contributes and the boundaries on reusing it.
 
-The letters are the stable task-id and leaderboard prefixes. Sub-type menus and seed tasks live in [`docs/task-backlog.md`](task-backlog.md).
+| Category *(the hard part · the verb)* | What it is — and what it probes | Examples | Graded on | v1 scope | PAI leverage |
+|---|---|---|---|---|---|
+| **A — Vague Ask** *(the Goal, while it's unclear · "clarify it")* | Deliberately ambiguous requests. Does the agent ask the right clarifying question, state assumptions explicitly, or silently guess? | "Build me a tracker for my reading" (no schema); "Make this faster" (no target); conflicting requirements in one prompt | The **Transcript** (the clarifying behavior) — judge. v1 grades the question/assumption turn; a scripted "user reply" is a fixed next prompt-step (the harness doesn't branch; true conditional replies are v2) | Ship — cheap, high-value | Moderate. PAI's founding ask — *"Is AI eliminating PM roles, transforming them, or creating new ones?"* (its PRD v0.8; the true first prompt predates the transcripts) — was genuinely underspecified; extract the *pattern* into 1–2 tasks, round out with non-data tasks |
+| **B — Long Haul** *(the Goal, holding over time · "hold the line")* | A vision or key requirement stated once at the start must survive later steps. Probes requirement drift (and, in v2, compaction and session resets) | "Dedupe by company, not by location," stated at step 1 and still binding at step 4 (the built b-01); "store all money as integer cents" while later features tempt floating-dollar math | The **final Deliverable** (the requirement still holds) — programmatic, often a single number | Ship 2–3 **lite** tasks; build b-01 early (it validates the multi-step runner). The **hard** tier → v2 (see tiers note below) | High. PAI's real dedup *debate* seeds the lite tasks — b-01 states the spec-era rule; the final PAI ruling went the other way, which is fine: the test is whether a *stated* rule survives ([evidence](pai-transcript-evidence.md)). The fragmented-session resume failures become the writeup case study and the v2 design source |
+| **C — Full Build** *(the Output · "build it")* | Build a working artifact from a short PRD or plain-language request. Probes end-to-end execution, sensible defaults, shipping something that actually runs | PRD → web app with a database; messy CSV → clean pipeline + dashboard; add auth to a small app; integrate a third-party API from vague docs | The **Deliverable** (does it run, match the schema) — programmatic, plus an optional quality-rubric layer that previews E (writeup only, not a leaderboard column). Keep input data *clean* — a data trap would make it Messy World | Core — most automatable, clearest signal | High. PAI was itself a PRD-to-web-app-with-pipeline build; reconstruct a clean slice (e.g. "ingest job postings and dedupe them") with known fixtures and a known definition of done |
+| **D — Messy World** *(the Setup · "notice it")* | Correctness requires noticing data-quality problems, not just writing code — the trap lives in the data, and the agent is *not* told to watch for it. Probes unprompted flagging, and defending choices when challenged | The same record under multiple keys ("one job posted in five locations"); two dashboard views disagreeing by an order of magnitude; ambiguous aggregation choices | The **Deliverable** (right answer) + the **Transcript** (did it flag the issue) — hybrid | Core — most automatable, clearest signal | Highest. Dedup-by-location, the order-of-magnitude discrepancy, and the title-taxonomy choices are real PAI edge cases with known answers and known traps; source most of D from PAI |
+| **E — Good Taste** *(the Answer Key · "judge it")* | A *working* answer is not enough: "correct" is subtle or contested, and the agent must exercise judgment. Probes quality, not just function | Two plausible answers conflict — pick the right one and defend it; a product/design call where several options work but one is clearly better | The **Deliverable** (for quality) + the **Transcript** (for reasoning) — judge | **v2** — hardest to grade reliably; previewed in v1 via C's quality layer; most directly serves the "model taste" deliverable (Section 10) | — |
 
-Each category card below ends with a **PAI leverage** note — how much of that category can be sourced from PAI (the PM-AI Hiring Index), the real product the author built end to end with Claude Code. Section 8 details what PAI contributes and the boundaries on reusing it.
+Notes on the table:
 
-### Category A — Vague Ask *(the hard part: the Goal, while it's unclear · "clarify it")*
-
-Deliberately ambiguous requests; the difficulty is interpreting the **Goal**.
-
-- **Examples:** "Build me a tracker for my reading" with no schema; "Make this faster" with no target; conflicting requirements in the same prompt.
-- **What it probes:** does the agent ask the right clarifying question, state assumptions explicitly, or silently guess?
-- **Graded on:** the **Transcript** (the clarifying behavior) — judge. In v1 the grade covers the question/assumption turn; any scripted "user reply" is just a fixed next prompt-step, because the harness does not branch on whether the agent asked. (True conditional replies are a v2 harness feature.)
-- **PAI leverage:** moderate. PAI's founding ask — *"Is AI eliminating PM roles, transforming them, or creating new ones?"* (its PRD v0.8; the true first prompt predates the transcripts) — was genuinely underspecified, and the author documented nearly jumping to implementation before stepping back. Extract that *pattern* into 1 to 2 standalone tasks; round out the category with non-data tasks so it does not read as data-only.
-
-### Category B — Long Haul *(the hard part: the Goal, holding over time · "hold the line")*
-
-Builds where the vision or a key requirement is stated once at the start and must survive later steps.
-
-- **Examples:** "dedupe by company, not by location," stated at step 1 and still binding at step 4 (the built b-01 task); "store all money as integer cents" while later features tempt floating-dollar math.
-- **What it probes:** requirement drift — whether the original goal survives iteration (and, in v2, compaction and session resets).
-- **Graded on:** the **final Deliverable** (the requirement still holds) — programmatic, often a single number.
-- **PAI leverage:** high. PAI's real dedup *debate* seeds the Long-Haul-lite tasks — b-01 states the spec-era rule (dedupe by company+title); the final PAI ruling went the other way (count per posting), which is fine: Long Haul tests whether a *stated* rule survives, not which rule is right ([evidence](pai-transcript-evidence.md)). PAI was also built across many fragmented sessions (usage limits), and losing context on resume was the author's biggest documented frustration — a lived Long-Haul-hard failure, used as a case study in the v1 writeup and as the design source for the v2 suite.
-
-Long Haul splits into two difficulty tiers:
-
-- **Long-Haul-lite (v1, automatable):** single session, one requirement stated once at step 1, agent runs through several more steps, final check confirms the requirement still holds. The grade is programmatic, often a single number, no judge needed. The b-01 sample task ("dedupe by company, not by location") is exactly this. Ship 2 to 3 of these in v1.
-- **Long-Haul-hard (v2, deferred):** multi-session builds with an actual context reset or compaction in the middle, requiring session-resume plumbing, harness instrumentation, and likely judge-assisted grading. This is the richest version and deserves a proper v2 rather than a rushed v1 corner.
-
-**The v1/v2 line is firm:** a v1 Long Haul task is single-session, no context reset, programmatically graded. Anything that requires session resume, compaction, or harness instrumentation is v2, full stop. This prevents Long-Haul-lite from creeping into Long-Haul-hard and blowing the timeline.
-
-### Category C — Full Build *(the hard part: the Output · "build it")*
-
-Build a working artifact from a short PRD or plain-language request.
-
-- **Examples:** PRD to a working web app with a database; CSV of messy data to a clean pipeline plus dashboard; add authentication to an existing small app; integrate a third-party API given only vague docs.
-- **What it probes:** end-to-end execution, sensible defaults, shipping something that actually runs.
-- **Graded on:** the **Deliverable** (does it run, match the schema) — programmatic, plus an optional quality-rubric layer that previews Good Taste (Category E). The quality layer feeds the writeup only; it is not a leaderboard column in v1.
-- **Boundary:** keep the input data *clean* here; a data trap would make it a Messy World task instead.
-- **PAI leverage:** high. PAI was itself a PRD-to-web-app-with-pipeline build; reconstruct a clean slice (e.g. "ingest job postings and dedupe them") as a task with known fixtures and a known definition of done.
-
-### Category D — Messy World *(the hard part: the Setup · "notice it")*
-
-Tasks where correctness requires noticing data-quality problems, not just writing code. The trap lives in the **Setup** (the data), and the agent is *not* told to watch for it.
-
-- **Examples:** a deduplication task where the same record appears under multiple keys (modeled on the "one job posted in five locations" problem); a dashboard where two views disagree by an order of magnitude and the agent must catch and explain it; ambiguous aggregation choices.
-- **What it probes:** whether the agent flags issues unprompted and defends its implementation choices when challenged.
-- **Graded on:** the **Deliverable** (right answer) + the **Transcript** (did it flag the issue) — hybrid.
-- **PAI leverage:** highest. The dedup-by-location problem, the order-of-magnitude dashboard discrepancy, and the title-taxonomy choices are all real PAI edge cases with known answers and known traps. Source most of this category from PAI.
-
-### Category E — Good Taste *(the hard part: the Answer Key · "judge it") — v2*
-
-Tasks where a *working* answer is not enough: "correct" is subtle or contested, and the agent must exercise judgment.
-
-- **Examples:** two plausible answers conflict and the agent must pick the right one and defend it; a product or design call where several options work but one is clearly better.
-- **What it probes:** quality and judgment, not just function.
-- **Graded on:** the **Deliverable** (for quality) + the **Transcript** (for reasoning) — judge.
-- **Status:** deferred to v2 because it is the hardest to grade reliably; v1 *previews* it via the quality-rubric layer on Full Build. It most directly serves the "model taste" deliverable (Section 10) — worth a proper v2, not a rushed corner.
-
-> v1 priority: Full Build and Messy World are the core (most automatable, clearest signal). Vague Ask is cheap and high-value, include it. Long Haul ships as Long-Haul-lite (2 to 3 single-session tasks) plus the PAI case study in the writeup; Long-Haul-hard is explicitly deferred to v2. Build one Long-Haul-lite task (b-01) early, since it validates the multi-step runner.
-> PAI seeds roughly 6 to 10 of the 20 to 30 tasks (most of Messy World, part of Full Build, 1 to 2 of Vague Ask, the template for Long Haul), plus the failure taxonomy and the writeup's narrative spine. Section 8 details the contributions and the boundaries that keep this a general builder benchmark rather than evals for one project.
+- **Long Haul's two tiers.** *Lite* (v1, automatable): single session, one requirement stated at step 1, several more steps, a final programmatic check — no judge needed; b-01 is exactly this. *Hard* (v2, deferred): multi-session builds with a real context reset or compaction, requiring session-resume plumbing, harness instrumentation, and likely judge-assisted grading — the richest version, worth a proper v2 rather than a rushed corner. **The line is firm:** anything requiring session resume, compaction, or harness instrumentation is v2, full stop — this keeps lite from creeping into hard and blowing the timeline.
+- **The letters** are the stable task-id and leaderboard prefixes. Sub-type menus and seed tasks live in [`docs/task-backlog.md`](task-backlog.md).
+- **PAI's overall share:** roughly 6 to 10 of the 20 to 30 tasks (most of D, part of C, 1–2 of A, the template for B), plus the failure taxonomy and the writeup's narrative spine — capped there so the suite reads as a general builder benchmark, not evals for one project (Section 8).
 
 ---
 
