@@ -203,28 +203,47 @@ Last updated: June 2026</p>
 </ul>
 <hr />
 <h2 id="6-how-grading-works">6. How grading works</h2>
-<p>Grading implements the <strong>Answer Key</strong> from Section 5, and it splits along the two Output surfaces: programmatic checks grade the <strong>Deliverable</strong>; an LLM judge grades the <strong>Transcript</strong>. Every task uses the first; only the categories that grade behavior need the second.</p>
-<ol>
-<li><strong>Programmatic checks first.</strong> Does it run? Do the tests pass? Does the data validation hold? Does the output match expected schema/values? This grades the Deliverable, and it fully covers Full Build, Long Haul, and the objective half of Messy World.</li>
-<li><strong>LLM judge for the subjective parts.</strong> A rubric-scored judge evaluates the Transcript: the quality of clarifying questions (Vague Ask) and whether the agent flagged and explained data issues (Messy World). Each rubric is explicit and per-task. Only Vague Ask and the subjective half of Messy World need it.</li>
-</ol>
-<p><strong>Validating the judge before trusting it.</strong> Labels come from runs, not tasks, and only two categories need the judge, so the subjective subset is small — roughly 25 to 40 transcripts across the three-model contestant set. Therefore:</p>
+<p>Grading implements the <strong>Answer Key</strong> from Section 5 and splits along the two Output surfaces:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Grader</th>
+<th>Grades</th>
+<th>What it checks</th>
+<th>Covers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Programmatic checks</strong> <em>(primary — every task)</em></td>
+<td>the <strong>Deliverable</strong></td>
+<td>does it run, do tests pass, does the output match expected schema/values</td>
+<td>Full Build, Long Haul, the objective half of Messy World</td>
+</tr>
+<tr>
+<td><strong>LLM judge</strong> <em>(only where behavior is graded)</em></td>
+<td>the <strong>Transcript</strong></td>
+<td>an explicit per-task rubric: quality of clarifying questions (Vague Ask); flagged and explained the data issue (Messy World)</td>
+<td>Vague Ask, the subjective half of Messy World</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="validating-the-judge-before-trusting-it">Validating the judge before trusting it</h3>
+<p>Labels come from runs, not tasks, and only two categories need the judge — roughly 25 to 40 transcripts across the three-model contestant set — so v1 hand-labels <strong>all</strong> of it.</p>
 <ul>
-<li>Hand-label the <strong>entire</strong> subjective subset once, rather than sampling it.</li>
-<li>Target agreement: Cohen's kappa &gt;= 0.7 (or ~85% exact agreement), reported honestly.</li>
-<li>Label ~15 to 20 cases twice to establish a human-human ceiling (the judge is not expected to beat it).</li>
-<li>If the judge falls short, fix the rubric, not the judge model, and re-label.</li>
-<li>Read every judge-vs-human disagreement to surface systematic bias (good writeup material).</li>
-<li><strong>Guard against self-preference:</strong> name the judge model in the report, and stratify judge-vs-human agreement <strong>by contestant model</strong> — a Claude judge must not be systematically kinder to Claude transcripts. If a per-model skew appears, report it and rebalance the rubric.</li>
-<li>Freeze a ~20 to 30 case gold set as a regression check for rubric or judge-model changes.</li>
+<li><strong>Protocol:</strong> label the entire subjective subset once; double-label ~15 to 20 cases to establish a human-human ceiling; freeze a ~20 to 30 case gold set as a regression check for rubric or judge-model changes.</li>
+<li><strong>The bar:</strong> Cohen's kappa &gt;= 0.7 (~85% exact agreement), reported honestly. The judge is not expected to beat the human ceiling.</li>
+<li><strong>On a miss:</strong> fix the rubric, not the judge model, then re-label. Read every judge-vs-human disagreement — systematic bias is writeup material.</li>
+<li><strong>Self-preference guard:</strong> name the judge model, and stratify agreement <strong>by contestant model</strong> — a Claude judge must not be systematically kinder to Claude transcripts. If a skew appears, report it and rebalance the rubric.</li>
 </ul>
-<p>The grades roll up into the <strong>Scorecard</strong>, reported per task and per category:</p>
+<h3 id="what-the-scorecard-reports">What the Scorecard reports</h3>
+<p>Per task and per category:</p>
 <ul>
-<li><strong>pass@1</strong> and <strong>pass@3</strong> (single attempt and best of three)</li>
-<li><strong>Cost per solved task</strong> — defined as total spend on <strong>all</strong> attempts, including failed ones, divided by the number of tasks solved; failed retries are part of a model's real cost. Undefined when a model solves zero tasks in a slice (shown as "—", never ranked). Costs are <strong>imputed from token counts at list API prices</strong> regardless of how a run was actually paid for (subscription vs. API key), so comparisons stay apples-to-apples; the payment mode is noted per run.</li>
-<li><strong>Failure mode tags</strong> (from the taxonomy in Section 7)</li>
+<li><strong>pass@1</strong> and <strong>pass@3</strong> — single attempt, and best of three.</li>
+<li><strong>Cost per solved task</strong> — total spend on <strong>all</strong> attempts (failed retries are part of a model's real cost) divided by tasks solved. Undefined at zero solves: shown as "—", never ranked. Costs are imputed from token counts at list API prices regardless of how a run was paid for (payment mode noted per run), so comparisons stay apples-to-apples.</li>
+<li><strong>Failure-mode tags</strong> — from the taxonomy in Section 7.</li>
 </ul>
-<p><strong>Reading the numbers honestly.</strong> With 5 to 8 tasks per category, a single task flipping moves a category pass rate by 12 to 20 points — so per-category results are directional, not rankings. The report shows confidence intervals on every pass rate, declines to rank models whose intervals overlap, and treats overall pass@1 across the full suite as the primary comparison. Where a category-level claim feeds a recommendation, run extra attempts on that cell before making it.</p>
+<p><strong>Reading the numbers honestly.</strong> With 5 to 8 tasks per category, one task flipping moves a category pass rate by 12 to 20 points — per-category results are directional, not rankings. So: confidence intervals on every pass rate; no ranking between models whose intervals overlap; overall pass@1 across the full suite is the primary comparison; and any category-level claim that feeds a recommendation gets extra attempts on that cell first.</p>
 <hr />
 <h2 id="7-failure-taxonomy">7. Failure taxonomy</h2>
 <p>The taxonomy is mined from the author's real Claude Code transcripts (the PAI build — Section 8; the tagged evidence lives in <a href="https://github.com/helenatan/builder-bench/blob/main/docs/pai-transcript-evidence.md"><code>docs/pai-transcript-evidence.md</code></a>) and seeds both task design and result tagging. Seven failure modes, each with a primary "home": the task category designed to provoke it. The categories and the taxonomy are two views of the same map — a failure can surface anywhere, but each has one place we deliberately hunt it.</p>

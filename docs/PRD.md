@@ -110,28 +110,31 @@ Notes on the table:
 
 ## 6. How grading works
 
-Grading implements the **Answer Key** from Section 5, and it splits along the two Output surfaces: programmatic checks grade the **Deliverable**; an LLM judge grades the **Transcript**. Every task uses the first; only the categories that grade behavior need the second.
+Grading implements the **Answer Key** from Section 5 and splits along the two Output surfaces:
 
-1. **Programmatic checks first.** Does it run? Do the tests pass? Does the data validation hold? Does the output match expected schema/values? This grades the Deliverable, and it fully covers Full Build, Long Haul, and the objective half of Messy World.
-2. **LLM judge for the subjective parts.** A rubric-scored judge evaluates the Transcript: the quality of clarifying questions (Vague Ask) and whether the agent flagged and explained data issues (Messy World). Each rubric is explicit and per-task. Only Vague Ask and the subjective half of Messy World need it.
+| Grader | Grades | What it checks | Covers |
+|--------|--------|----------------|--------|
+| **Programmatic checks** *(primary — every task)* | the **Deliverable** | does it run, do tests pass, does the output match expected schema/values | Full Build, Long Haul, the objective half of Messy World |
+| **LLM judge** *(only where behavior is graded)* | the **Transcript** | an explicit per-task rubric: quality of clarifying questions (Vague Ask); flagged and explained the data issue (Messy World) | Vague Ask, the subjective half of Messy World |
 
-**Validating the judge before trusting it.** Labels come from runs, not tasks, and only two categories need the judge, so the subjective subset is small — roughly 25 to 40 transcripts across the three-model contestant set. Therefore:
+### Validating the judge before trusting it
 
-- Hand-label the **entire** subjective subset once, rather than sampling it.
-- Target agreement: Cohen's kappa >= 0.7 (or ~85% exact agreement), reported honestly.
-- Label ~15 to 20 cases twice to establish a human-human ceiling (the judge is not expected to beat it).
-- If the judge falls short, fix the rubric, not the judge model, and re-label.
-- Read every judge-vs-human disagreement to surface systematic bias (good writeup material).
-- **Guard against self-preference:** name the judge model in the report, and stratify judge-vs-human agreement **by contestant model** — a Claude judge must not be systematically kinder to Claude transcripts. If a per-model skew appears, report it and rebalance the rubric.
-- Freeze a ~20 to 30 case gold set as a regression check for rubric or judge-model changes.
+Labels come from runs, not tasks, and only two categories need the judge — roughly 25 to 40 transcripts across the three-model contestant set — so v1 hand-labels **all** of it.
 
-The grades roll up into the **Scorecard**, reported per task and per category:
+- **Protocol:** label the entire subjective subset once; double-label ~15 to 20 cases to establish a human-human ceiling; freeze a ~20 to 30 case gold set as a regression check for rubric or judge-model changes.
+- **The bar:** Cohen's kappa >= 0.7 (~85% exact agreement), reported honestly. The judge is not expected to beat the human ceiling.
+- **On a miss:** fix the rubric, not the judge model, then re-label. Read every judge-vs-human disagreement — systematic bias is writeup material.
+- **Self-preference guard:** name the judge model, and stratify agreement **by contestant model** — a Claude judge must not be systematically kinder to Claude transcripts. If a skew appears, report it and rebalance the rubric.
 
-- **pass@1** and **pass@3** (single attempt and best of three)
-- **Cost per solved task** — defined as total spend on **all** attempts, including failed ones, divided by the number of tasks solved; failed retries are part of a model's real cost. Undefined when a model solves zero tasks in a slice (shown as "—", never ranked). Costs are **imputed from token counts at list API prices** regardless of how a run was actually paid for (subscription vs. API key), so comparisons stay apples-to-apples; the payment mode is noted per run.
-- **Failure mode tags** (from the taxonomy in Section 7)
+### What the Scorecard reports
 
-**Reading the numbers honestly.** With 5 to 8 tasks per category, a single task flipping moves a category pass rate by 12 to 20 points — so per-category results are directional, not rankings. The report shows confidence intervals on every pass rate, declines to rank models whose intervals overlap, and treats overall pass@1 across the full suite as the primary comparison. Where a category-level claim feeds a recommendation, run extra attempts on that cell before making it.
+Per task and per category:
+
+- **pass@1** and **pass@3** — single attempt, and best of three.
+- **Cost per solved task** — total spend on **all** attempts (failed retries are part of a model's real cost) divided by tasks solved. Undefined at zero solves: shown as "—", never ranked. Costs are imputed from token counts at list API prices regardless of how a run was paid for (payment mode noted per run), so comparisons stay apples-to-apples.
+- **Failure-mode tags** — from the taxonomy in Section 7.
+
+**Reading the numbers honestly.** With 5 to 8 tasks per category, one task flipping moves a category pass rate by 12 to 20 points — per-category results are directional, not rankings. So: confidence intervals on every pass rate; no ranking between models whose intervals overlap; overall pass@1 across the full suite is the primary comparison; and any category-level claim that feeds a recommendation gets extra attempts on that cell first.
 
 ---
 
