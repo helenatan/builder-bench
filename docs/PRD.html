@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Builder-Bench: PRD</title>
+<style>
+:root {
+  --bg: #fdfdfb; --fg: #1d1d1f; --muted: #59595e; --accent: #0a5dc2;
+  --border: #e3e2dd; --soft: #f4f3ee; --th: #ece9e2; --zebra: #f8f7f3;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16181d; --fg: #e8e8ea; --muted: #a0a0a8; --accent: #6cb0ff;
+    --border: #33363e; --soft: #1f2229; --th: #262a32; --zebra: #1b1e24;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 17px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+main { max-width: 56rem; margin: 0 auto; padding: 2.5rem 1.5rem 6rem; }
+h1 { font-size: 2rem; line-height: 1.25; margin: 0 0 .4rem; letter-spacing: -.01em; }
+h1 + p strong { font-weight: 600; color: var(--muted); }
+h2 {
+  font-size: 1.45rem; margin: 3rem 0 1rem; padding-bottom: .35rem;
+  border-bottom: 2px solid var(--border); letter-spacing: -.01em;
+}
+h3 { font-size: 1.12rem; margin: 2rem 0 .75rem; }
+h4 { font-size: 1rem; margin: 1.5rem 0 .5rem; }
+p, ul, ol { margin: .8rem 0; }
+li { margin: .35rem 0; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+del { color: var(--muted); }
+blockquote {
+  margin: 1.2rem 0; padding: .8rem 1.1rem; background: var(--soft);
+  border-left: 4px solid var(--accent); border-radius: 0 6px 6px 0;
+}
+blockquote p { margin: .4rem 0; }
+code {
+  font: .88em/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: var(--soft); border: 1px solid var(--border);
+  border-radius: 4px; padding: .08em .35em;
+}
+pre { background: var(--soft); border: 1px solid var(--border);
+      border-radius: 8px; padding: 1rem; overflow-x: auto; }
+pre code { background: none; border: none; padding: 0; }
+
+.table-wrap { overflow-x: auto; margin: 1.2rem 0; border: 1px solid var(--border);
+              border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; line-height: 1.5; }
+th, td { padding: .6rem .75rem; text-align: left; vertical-align: top;
+         border-bottom: 1px solid var(--border); }
+th { background: var(--th); font-weight: 650; position: sticky; top: 0; }
+tr:nth-child(even) td { background: var(--zebra); }
+tr:last-child td { border-bottom: none; }
+td:not(:last-child), th:not(:last-child) { border-right: 1px solid var(--border); }
+/* wide tables (the §5 master table) get room and a minimum width to stay legible */
+.table-wrap.wide table { min-width: 1080px; }
+
+.toc { background: var(--soft); border: 1px solid var(--border); border-radius: 8px;
+       padding: 1rem 1.4rem; margin: 1.6rem 0 2.4rem; }
+.toc::before { content: "Contents"; font-weight: 650; display: block; margin-bottom: .4rem; }
+.toc ul { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 2.5rem; }
+.toc ul ul { display: none; }            /* top-level sections only */
+.toc li { margin: .2rem 0; break-inside: avoid; }
+@media (max-width: 640px) { .toc ul { columns: 1; } body { font-size: 16px; } }
+@media print {
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .table-wrap { overflow: visible; border: none; }
+  .table-wrap.wide table { min-width: 0; }
+  .toc { display: none; }
+}
+</style>
+</head>
+<body>
+<main>
+<h1 id="builder-bench-prd">Builder-Bench: PRD</h1>
+<p><strong>An open-source agentic eval suite for coding agents, built around the "non-engineer builder" persona.</strong></p>
+<p>Author: Helena Tan
+Status: v1 — in build (M0 shipped; all open questions resolved, see Section 14)
+Last updated: June 2026</p>
+<div class="toc">
+<ul>
+<li><a href="#builder-bench-prd">Builder-Bench: PRD</a><ul>
+<li><a href="#1-summary">1. Summary</a></li>
+<li><a href="#2-goals-and-non-goals">2. Goals and non-goals</a></li>
+<li><a href="#3-why-this-matters-motivation">3. Why this matters (motivation)</a></li>
+<li><a href="#4-users">4. Users</a></li>
+<li><a href="#5-scope-task-categories">5. Scope: task categories</a></li>
+<li><a href="#6-how-grading-works">6. How grading works</a></li>
+<li><a href="#7-failure-taxonomy">7. Failure taxonomy</a></li>
+<li><a href="#8-leveraging-pm-ai-hiring-index-pai-as-source-material">8. Leveraging PM-AI Hiring Index (PAI) as source material</a></li>
+<li><a href="#9-technical-design">9. Technical design</a></li>
+<li><a href="#10-deliverables-what-the-final-product-looks-like">10. Deliverables: what the final product looks like</a></li>
+<li><a href="#11-milestones">11. Milestones</a></li>
+<li><a href="#12-success-criteria">12. Success criteria</a></li>
+<li><a href="#13-risks-and-mitigations">13. Risks and mitigations</a></li>
+<li><a href="#14-open-questions-all-resolved">14. Open questions — all resolved</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h2 id="1-summary">1. Summary</h2>
+<p>Builder-Bench measures how well coding agents (Claude Code, Codex, and others) take a person from a rough idea to a working, shipped product, the way a PM, designer, or analyst actually works, rather than the way an engineer fixes bugs in an existing repo.</p>
+<p>Existing benchmarks like SWE-bench test agents on engineer-written GitHub issues inside mature codebases. That misses a rapidly growing way people use coding agents: a non-engineer describing what they want and expecting the agent to build it end to end. Builder-Bench fills that gap with a graded task suite, a failure taxonomy mined from real transcripts, and a writeup that translates results into concrete recommendations for a model team.</p>
+<p>This is a portfolio project with two audiences: the open-source community (a useful benchmark) and Anthropic's Claude Code model performance team (evidence of eval-building skill and model taste).</p>
+<hr />
+<h2 id="2-goals-and-non-goals">2. Goals and non-goals</h2>
+<h3 id="goals">Goals</h3>
+<ol>
+<li>Produce a reproducible, open-source benchmark of 20 to 30 tasks across four categories that reflect real "builder" workflows.</li>
+<li>Grade agents automatically with a hybrid harness (programmatic checks plus a validated LLM judge).</li>
+<li>Run the benchmark across three Anthropic tiers (Opus, Sonnet, Haiku) and report pass rates, cost per solved task, and failure modes.</li>
+<li>Publish a writeup with a failure taxonomy and three concrete model-behavior changes, backed by transcript evidence.</li>
+</ol>
+<h3 id="non-goals">Non-goals</h3>
+<ul>
+<li>Not a general SWE benchmark. We are not re-testing bug-fixing in large legacy repos.</li>
+<li>Not a cross-lab comparison in v1. OpenAI and Gemini models — and the second-harness experiment that only makes sense with them — are out of scope due to API cost; they are the headline v2 extension (Section 9).</li>
+<li>Not a leaderboard service. v1 is a static repo with results, not a hosted, continuously updated leaderboard.</li>
+<li>Not a model-training artifact. We measure and diagnose; we do not fine-tune.</li>
+<li>Not enterprise permission/security testing. That is a separate project.</li>
+</ul>
+<hr />
+<h2 id="3-why-this-matters-motivation">3. Why this matters (motivation)</h2>
+<p>The job-to-be-done for a coding agent is shifting. A growing share of users are not professional engineers; they are people with domain knowledge and a clear goal who want the agent to handle implementation. Their tasks look different: vague specs, judgment calls about data, "just make it work" requests, and long multi-session builds.</p>
+<p>No public benchmark measures this well. Building one demonstrates a thesis the Claude Code team cares about and creates a concrete tool for improving the model for this persona. It also draws on direct experience building real products this way, including the PM-AI Hiring Index, which is a source of realistic tasks and edge cases.</p>
+<hr />
+<h2 id="4-users">4. Users</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>User</th>
+<th>What they get</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model/eval teams</td>
+<td>A diagnostic suite that surfaces builder-persona failure modes and a methodology they can extend</td>
+</tr>
+<tr>
+<td>Coding-agent users (PMs, analysts, indie builders)</td>
+<td>Evidence of which agents handle builder work (vague ask → working product), and how reliably</td>
+</tr>
+<tr>
+<td>The author</td>
+<td>A public artifact proving eval-building skill and refined model taste</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="5-scope-task-categories">5. Scope: task categories</h2>
+<p>Tasks fall into five categories, derived from the anatomy below. Four ship in v1 — roughly 5 to 8 tasks each, 20 to 30 total — and the fifth is deferred to v2. Each task is realistic, self-contained, and gradeable.</p>
+<h3 id="the-anatomy-of-an-evaluation">The anatomy of an evaluation</h3>
+<p>Picture handing someone an assignment, then grading a stack of them:</p>
+<blockquote>
+<p><strong>Task</strong> (Setup · Goal · Answer Key) → run by a <strong>Contestant</strong> → produces <strong>Output</strong> → scored by the Answer Key → rolled up into a <strong>Scorecard</strong>.</p>
+</blockquote>
+<p><strong>Task layer — the question</strong> <em>(authored once, frozen; this is all a contributor writes)</em>
+- <strong>Setup</strong> — what the agent starts with: the files, data, and tools already on the desk.
+- <strong>Goal</strong> — what we ask it to achieve.
+- <strong>Answer Key</strong> — what counts as correct, and how we check.</p>
+<p><strong>Run layer — the attempt</strong> <em>(one model, one episode)</em>
+- <strong>Contestant</strong> — who's being tested: the model, run in the same neutral harness as everyone else so it's a fair race.
+- <strong>Output</strong> — what it hands back: the finished work (the <strong>Deliverable</strong>) and the record of how it got there (the <strong>Transcript</strong>).</p>
+<p><strong>Report layer — the verdict</strong> <em>(across many runs)</em>
+- <strong>Scorecard</strong> — the grades rolled up: success rate (pass@1/@3) and cost.</p>
+<p>A <strong>task</strong> is exactly the Task layer — Setup, Goal, and Answer Key, frozen in a folder. The Contestant, Output, and Scorecard only come into being when the task is run.</p>
+<p>So where can a task's difficulty live? Not in the <strong>Contestant</strong> — that is <em>who we're testing</em>, and it changes every run. Not in the <strong>Scorecard</strong> — that is <em>how we measure</em>, and it is identical for everyone. The difficulty is designed into one of the other four parts:</p>
+<ul>
+<li>the <strong>Setup</strong> can hide a trap (flawed data),</li>
+<li>the <strong>Goal</strong> can be hard to pin down, or hard to hold onto,</li>
+<li>the <strong>Output</strong> demanded can be a whole working product,</li>
+<li>the <strong>Answer Key</strong> can hinge on judgment, not just checks.</li>
+</ul>
+<p><strong>A category is named for which part carries the difficulty.</strong> (Full detail, including how the layers map onto the repo, in <a href="https://github.com/helenatan/builder-bench/blob/main/docs/eval-framework.md"><code>docs/eval-framework.md</code></a>.)</p>
+<p>There is one category per hard part — except the Goal, which gets two, because it can be hard in two different ways: unclear <em>now</em> (the agent must clarify it), or clear but easy to lose <em>over time</em> (the agent must hold onto it). That makes five categories:</p>
+<p>PAI in the last column is the PM-AI Hiring Index — the real product the author built end to end with Claude Code; Section 8 details what it contributes and the boundaries on reusing it.</p>
+<div class="table-wrap wide"><table>
+<thead>
+<tr>
+<th>Category <em>(the hard part · the verb)</em></th>
+<th>What it is — and what it probes</th>
+<th>Examples</th>
+<th>Graded on</th>
+<th>v1 scope</th>
+<th>PAI leverage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A — Vague Ask</strong> <em>(the Goal, while it's unclear · "clarify it")</em></td>
+<td>Deliberately ambiguous requests. Does the agent ask the right clarifying question, state assumptions explicitly, or silently guess?</td>
+<td>"Build me a tracker for my reading" (no schema); "Make this faster" (no target); conflicting requirements in one prompt</td>
+<td>The <strong>Transcript</strong> (the clarifying behavior) — judge. v1 grades the question/assumption turn; a scripted "user reply" is a fixed next prompt-step (the harness doesn't branch; true conditional replies are v2)</td>
+<td>Ship — cheap, high-value</td>
+<td>Moderate. PAI's founding ask — <em>"Is AI eliminating PM roles, transforming them, or creating new ones?"</em> (its PRD v0.8; the true first prompt predates the transcripts) — was genuinely underspecified; extract the <em>pattern</em> into 1–2 tasks, round out with non-data tasks</td>
+</tr>
+<tr>
+<td><strong>B — Long Haul</strong> <em>(the Goal, holding over time · "hold the line")</em></td>
+<td>A vision or key requirement stated once at the start must survive later steps. Probes requirement drift (and, in v2, compaction and session resets)</td>
+<td>"Dedupe by company, not by location," stated at step 1 and still binding at step 4 (the built b-01); "store all money as integer cents" while later features tempt floating-dollar math</td>
+<td>The <strong>final Deliverable</strong> (the requirement still holds) — programmatic, often a single number</td>
+<td>Ship 2–3 <strong>lite</strong> tasks; build b-01 early (it validates the multi-step runner). The <strong>hard</strong> tier → v2 (see tiers note below)</td>
+<td>High. PAI's real dedup <em>debate</em> seeds the lite tasks — b-01 states the spec-era rule; the final PAI ruling went the other way, which is fine: the test is whether a <em>stated</em> rule survives (<a href="https://github.com/helenatan/builder-bench/blob/main/docs/pai-transcript-evidence.md">evidence</a>). The fragmented-session resume failures become the writeup case study and the v2 design source</td>
+</tr>
+<tr>
+<td><strong>C — Full Build</strong> <em>(the Output · "build it")</em></td>
+<td>Build a working artifact from a short PRD or plain-language request. Probes end-to-end execution, sensible defaults, shipping something that actually runs</td>
+<td>PRD → web app with a database; messy CSV → clean pipeline + dashboard; add auth to a small app; integrate a third-party API from vague docs</td>
+<td>The <strong>Deliverable</strong> (does it run, match the schema) — programmatic, plus an optional quality-rubric layer that previews E (writeup only, not a leaderboard column). Keep input data <em>clean</em> — a data trap would make it Messy World</td>
+<td>Core — most automatable, clearest signal</td>
+<td>High. PAI was itself a PRD-to-web-app-with-pipeline build; reconstruct a clean slice (e.g. "ingest job postings and dedupe them") with known fixtures and a known definition of done</td>
+</tr>
+<tr>
+<td><strong>D — Messy World</strong> <em>(the Setup · "notice it")</em></td>
+<td>Correctness requires noticing data-quality problems, not just writing code — the trap lives in the data, and the agent is <em>not</em> told to watch for it. Probes unprompted flagging, and defending choices when challenged</td>
+<td>The same record under multiple keys ("one job posted in five locations"); two dashboard views disagreeing by an order of magnitude; ambiguous aggregation choices</td>
+<td>The <strong>Deliverable</strong> (right answer) + the <strong>Transcript</strong> (did it flag the issue) — hybrid</td>
+<td>Core — most automatable, clearest signal</td>
+<td>Highest. Dedup-by-location, the order-of-magnitude discrepancy, and the title-taxonomy choices are real PAI edge cases with known answers and known traps; source most of D from PAI</td>
+</tr>
+<tr>
+<td><strong>E — Good Taste</strong> <em>(the Answer Key · "judge it")</em></td>
+<td>A <em>working</em> answer is not enough: "correct" is subtle or contested, and the agent must exercise judgment. Probes quality, not just function</td>
+<td>Two plausible answers conflict — pick the right one and defend it; a product/design call where several options work but one is clearly better</td>
+<td>The <strong>Deliverable</strong> (for quality) + the <strong>Transcript</strong> (for reasoning) — judge</td>
+<td><strong>v2</strong> — hardest to grade reliably; previewed in v1 via C's quality layer; most directly serves the "model taste" deliverable (Section 10)</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p>Notes on the table:</p>
+<ul>
+<li><strong>Long Haul's two tiers.</strong> <em>Lite</em> (v1, automatable): single session, one requirement stated at step 1, several more steps, a final programmatic check — no judge needed; b-01 is exactly this. <em>Hard</em> (v2, deferred): multi-session builds with a real context reset or compaction, requiring session-resume plumbing, harness instrumentation, and likely judge-assisted grading — the richest version, worth a proper v2 rather than a rushed corner. <strong>The line is firm:</strong> anything requiring session resume, compaction, or harness instrumentation is v2, full stop — this keeps lite from creeping into hard and blowing the timeline.</li>
+<li><strong>The letters</strong> are the stable task-id and leaderboard prefixes. Sub-type menus and seed tasks live in <a href="https://github.com/helenatan/builder-bench/blob/main/docs/task-backlog.md"><code>docs/task-backlog.md</code></a>.</li>
+<li><strong>PAI's overall share:</strong> roughly 6 to 10 of the 20 to 30 tasks (most of D, part of C, 1–2 of A, the template for B), plus the failure taxonomy and the writeup's narrative spine — capped there so the suite reads as a general builder benchmark, not evals for one project (Section 8).</li>
+</ul>
+<hr />
+<h2 id="6-how-grading-works">6. How grading works</h2>
+<p>Grading implements the <strong>Answer Key</strong> from Section 5, and it splits along the two Output surfaces: programmatic checks grade the <strong>Deliverable</strong>; an LLM judge grades the <strong>Transcript</strong>. Every task uses the first; only the categories that grade behavior need the second.</p>
+<ol>
+<li><strong>Programmatic checks first.</strong> Does it run? Do the tests pass? Does the data validation hold? Does the output match expected schema/values? This grades the Deliverable, and it fully covers Full Build, Long Haul, and the objective half of Messy World.</li>
+<li><strong>LLM judge for the subjective parts.</strong> A rubric-scored judge evaluates the Transcript: the quality of clarifying questions (Vague Ask) and whether the agent flagged and explained data issues (Messy World). Each rubric is explicit and per-task. Only Vague Ask and the subjective half of Messy World need it.</li>
+</ol>
+<p><strong>Validating the judge before trusting it.</strong> Labels come from runs, not tasks, and only two categories need the judge, so the subjective subset is small — roughly 25 to 40 transcripts across the three-model contestant set. Therefore:</p>
+<ul>
+<li>Hand-label the <strong>entire</strong> subjective subset once, rather than sampling it.</li>
+<li>Target agreement: Cohen's kappa &gt;= 0.7 (or ~85% exact agreement), reported honestly.</li>
+<li>Label ~15 to 20 cases twice to establish a human-human ceiling (the judge is not expected to beat it).</li>
+<li>If the judge falls short, fix the rubric, not the judge model, and re-label.</li>
+<li>Read every judge-vs-human disagreement to surface systematic bias (good writeup material).</li>
+<li><strong>Guard against self-preference:</strong> name the judge model in the report, and stratify judge-vs-human agreement <strong>by contestant model</strong> — a Claude judge must not be systematically kinder to Claude transcripts. If a per-model skew appears, report it and rebalance the rubric.</li>
+<li>Freeze a ~20 to 30 case gold set as a regression check for rubric or judge-model changes.</li>
+</ul>
+<p>The grades roll up into the <strong>Scorecard</strong>, reported per task and per category:</p>
+<ul>
+<li><strong>pass@1</strong> and <strong>pass@3</strong> (single attempt and best of three)</li>
+<li><strong>Cost per solved task</strong> — defined as total spend on <strong>all</strong> attempts, including failed ones, divided by the number of tasks solved; failed retries are part of a model's real cost. Undefined when a model solves zero tasks in a slice (shown as "—", never ranked). Costs are <strong>imputed from token counts at list API prices</strong> regardless of how a run was actually paid for (subscription vs. API key), so comparisons stay apples-to-apples; the payment mode is noted per run.</li>
+<li><strong>Failure mode tags</strong> (from the taxonomy in Section 7)</li>
+</ul>
+<p><strong>Reading the numbers honestly.</strong> With 5 to 8 tasks per category, a single task flipping moves a category pass rate by 12 to 20 points — so per-category results are directional, not rankings. The report shows confidence intervals on every pass rate, declines to rank models whose intervals overlap, and treats overall pass@1 across the full suite as the primary comparison. Where a category-level claim feeds a recommendation, run extra attempts on that cell before making it.</p>
+<hr />
+<h2 id="7-failure-taxonomy">7. Failure taxonomy</h2>
+<p>The taxonomy is mined from the author's real Claude Code transcripts (the PAI build — Section 8; the tagged evidence lives in <a href="https://github.com/helenatan/builder-bench/blob/main/docs/pai-transcript-evidence.md"><code>docs/pai-transcript-evidence.md</code></a>) and seeds both task design and result tagging. Seven failure modes, each with a primary "home": the task category designed to provoke it. The categories and the taxonomy are two views of the same map — a failure can surface anywhere, but each has one place we deliberately hunt it.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Failure mode</th>
+<th>What it looks like</th>
+<th>Home category</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Premature implementation</strong></td>
+<td>jumps to code before understanding the goal</td>
+<td>A — Vague Ask</td>
+</tr>
+<tr>
+<td><strong>Silent assumptions</strong></td>
+<td>guesses on ambiguity instead of asking or flagging</td>
+<td>A — Vague Ask · D — Messy World</td>
+</tr>
+<tr>
+<td><strong>Vision drift</strong></td>
+<td>loses the originally stated objective over a long session</td>
+<td>B — Long Haul</td>
+</tr>
+<tr>
+<td><strong>Weak self-verification</strong></td>
+<td>does not check its own work; ships broken output</td>
+<td>C — Full Build</td>
+</tr>
+<tr>
+<td><strong>Over-eagerness</strong></td>
+<td>does more than asked, introducing scope or risk</td>
+<td>C — Full Build · E — Good Taste</td>
+</tr>
+<tr>
+<td><strong>Data blindness</strong></td>
+<td>does not notice data-quality problems</td>
+<td>D — Messy World</td>
+</tr>
+<tr>
+<td><strong>Fabricated data</strong></td>
+<td>invents plausible content (numbers, quotes, history) instead of flagging that real data is missing</td>
+<td>D — Messy World</td>
+</tr>
+</tbody>
+</table></div>
+<p>Each failure observed in a run gets tagged. The taxonomy is a deliverable in its own right: it is the bridge from "scores" to "here is what to change in the model."</p>
+<hr />
+<h2 id="8-leveraging-pm-ai-hiring-index-pai-as-source-material">8. Leveraging PM-AI Hiring Index (PAI) as source material</h2>
+<p>PAI — the PM-AI Hiring Index, the author's web app built end to end with Claude Code — is a primary source for this benchmark rather than a coincidental side project. It contributes in four ways, ordered by value.</p>
+<p><strong>As real, battle-tested tasks.</strong> The strongest benchmark tasks come from real problems, not invented ones. PAI's actual edge cases (dedup-by-location, the order-of-magnitude dashboard discrepancy, title-taxonomy classification) become Messy World tasks with known correct answers and known traps. A reconstructed pipeline slice becomes a Full Build task. The vague original prompt becomes a Vague Ask task. A multi-session feature becomes the template for a Long Haul task. See the per-category notes in Section 5 for which tasks each category draws from PAI.</p>
+<p><strong>As a transcript mine for the failure taxonomy.</strong> PAI was built entirely through Claude Code, so its real session transcripts directly seed Section 7. Rather than theorizing failure modes, tag the actual moments they occurred.</p>
+<p><strong>As built-in credibility for the writeup.</strong> The narrative arc ("I built a real product with Claude Code, hit these specific failure modes, turned them into a benchmark, and here is what I would change in the model") is authentic because PAI is the origin story. It doubles as proof the author is a daily Claude Code user who ships.</p>
+<p><strong>As a real-world case study for Long Haul.</strong> PAI was built across many fragmented sessions because of usage limits, and losing context on session resume was the author's biggest documented frustration. That is a lived long-horizon coherence failure that can carry the Long Haul section even before full automation exists.</p>
+<h3 id="transcript-tagging-workflow">Transcript-tagging workflow</h3>
+<p><strong>Status: done.</strong> The pass ran over all 27 sessions (May 17 – June 7, 2026); the tagged evidence lives in <a href="https://github.com/helenatan/builder-bench/blob/main/docs/pai-transcript-evidence.md"><code>docs/pai-transcript-evidence.md</code></a>.</p>
+<p>A single pass over the PAI transcripts produces material for three deliverables at once. While reading, tag each notable moment with one or more of:</p>
+<ul>
+<li><strong>Taxonomy tag</strong> (Section 7 categories): seeds the failure taxonomy and result tagging.</li>
+<li><strong>Clarify tag</strong> (any moment an ambiguous request had to be clarified): seeds Vague Ask task design.</li>
+<li><strong>Drift tag</strong> (any moment context or a stated requirement was lost across a session boundary): seeds Long Haul task design and the writeup case study.</li>
+</ul>
+<h3 id="boundaries-on-pai-reuse">Boundaries on PAI reuse</h3>
+<ul>
+<li>Extract the <em>pattern and the data</em>, not the live codebase. Every task must start from a fixed, minimal starting state so anyone can reproduce it from a clean clone.</li>
+<li>No task may require the full PAI repo, PAI's Supabase credentials, or any private context.</li>
+<li>PAI is data/dashboard-heavy, so cap its share at roughly 6 to 10 of 20 to 30 tasks and deliberately add non-PAI tasks (auth, API integration, a non-data app) so the suite reads as a general builder benchmark.</li>
+</ul>
+<hr />
+<h2 id="9-technical-design">9. Technical design</h2>
+<ul>
+<li><strong>Runner:</strong> headless agent execution through one <strong>neutral harness</strong>, the <strong>Claude Agent SDK</strong>, with a thin adapter layer so the scaffolding is identical for every model run. v1 is Anthropic-only, so a single harness suffices and no rival lab's model is disadvantaged by Claude-native scaffolding; the two-harness second-factor design moves to v2 with the cross-lab comparison. See the harness note below.</li>
+<li><strong>Sandboxing:</strong> each task runs in an isolated Docker container with a fixed starting state, so runs are reproducible and tasks cannot interfere.</li>
+<li><strong>Task format &amp; definition:</strong> a <strong>task</strong> is the reusable, model-independent unit of evaluation — a folder that freezes three of the six framework parts so any contestant can be run against it: the <strong>Goal</strong> (the prompt or prompt-steps), the <strong>Setup</strong> (<code>setup.sh</code> + <code>fixtures/</code>), and the <strong>Answer Key</strong> (<code>grader.py</code> + <code>expected/</code> + a hidden reference solution), bound by a <code>success.yaml</code> manifest. The other three parts live <em>outside</em> the task: the <strong>Contestant</strong> is supplied at run time (<code>--model</code>), the <strong>Output</strong> is produced into the run's workdir, and the <strong>Scorecard</strong> is aggregated across runs. One task → many <strong>runs</strong> (attempts); pass@k aggregates them, and labels for judge validation come from <em>runs</em>, not tasks (see §6). This is also why a task is not the same as a single "test case": a test case is one input→expected→grader row evaluated in one model call, whereas a task is an <em>environment</em> an agent works in across many turns, graded on its trajectory and end-state. The folder schema is documented in <a href="https://github.com/helenatan/builder-bench/blob/main/tasks/README.md"><code>tasks/README.md</code></a> so others can contribute tasks.</li>
+<li><strong>Models in v1 (Anthropic only, three tiers):</strong> Claude <strong>Opus 4.6</strong> (flagship, primary system under test), Claude <strong>Sonnet 4.6</strong> (mid-tier), and Claude <strong>Haiku 4.5</strong> (budget). Three points on the cost-capability curve answer the question the suite cares about: "what do you give up by going cheaper, and is the cheap tier good enough for builder tasks?"</li>
+<li><strong>Out of scope for v1 — API cost:</strong> OpenAI (GPT-5.5 / GPT-5.4-mini) and Google (Gemini 3.5 Pro / Flash). Anthropic runs ride the author's Claude subscription through the Claude Agent SDK; competitor models would require pay-per-use API spend (as would Anthropic models driven through any second harness). The cross-lab comparison is the headline v2 extension, and the adapter layer is built so adding those models is a config change, not a rewrite.</li>
+<li>Report <strong>cost-per-solved-task</strong> alongside pass rates for each tier.</li>
+</ul>
+<h4 id="reference-pricing-per-1m-tokens-input-output-as-of-june-2026">Reference pricing (per 1M tokens, input / output, as of June 2026)</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Model</th>
+<th>Price (in / out)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Flagship</td>
+<td>Claude Opus 4.6</td>
+<td>$5 / $25</td>
+</tr>
+<tr>
+<td>Mid</td>
+<td>Claude Sonnet 4.6</td>
+<td>$3 / $15</td>
+</tr>
+<tr>
+<td>Budget</td>
+<td>Claude Haiku 4.5</td>
+<td>$1 / $5</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>Prices move; confirm at run time. Batch/cached pricing can cut these substantially (Anthropic Batch API ~50% off), so note which pricing mode each run used. The headline metric is <strong>cost-per-solved-task</strong>, not raw token price: a flagship that solves twice as many tasks can be cheaper per solved task than a budget model that fails and retries.</p>
+<p>Back-of-envelope for the full v1 matrix: ~26 tasks × 3 models × 3 attempts ≈ <strong>~230 runs</strong>, all through the Claude Agent SDK. On the subscription the marginal dollar cost is ~$0, but the 5-hour/weekly usage windows throttle batches — spread the record run across several days, or switch it to an API key (~<strong>$120–$470</strong> at $0.50–$2.00 per attempt) for batch pricing, no throttling, and clean accounting. Either way, <em>report</em> imputed costs at list prices (Section 6).</p>
+</blockquote>
+<ul>
+<li><strong>Reproducibility:</strong> pinned model versions, sampling settings recorded per run (LLM APIs are not reliably seedable, and pass@k depends on attempt variance — record, don't pretend to fix), logged transcripts for every run. Each result also records the model's training cutoff vs. the task's publication date: public tasks become trainable the day they ship, and the private held-out split is the long-term contamination check.</li>
+</ul>
+<h3 id="harness-note-why-one-harness-is-fine-in-v1-and-the-v2-second-factor-plan">Harness note: why one harness is fine in v1, and the v2 second-factor plan</h3>
+<p>Each lab ships its own agent harness (Claude Code, OpenAI Codex, Google Antigravity), and running a model inside a harness measures <em>model + harness</em>, not the model alone. That is only a fairness problem when labs are being <em>compared</em>: in an Anthropic-only v1, running Claude tiers through Claude's own Agent SDK disadvantages no one, so a single harness is methodologically clean. Within v1, harness and tasks are held constant and only the model tier varies — differences trace to the model.</p>
+<p>When the cross-lab comparison arrives in v2, the harness becomes a <strong>second factor we measure</strong> rather than assume away: a 2×N matrix (Claude Agent SDK + OpenAI Agents SDK × the model set) separates the <strong>model effect</strong> (down a column), the <strong>harness effect</strong> (across a row), and the <strong>home-field advantage</strong> (a model in its own lab's harness vs. a rival's — the interaction, and the most actionable result for a model team). The known limits of that design, recorded now for then: the two harnesses must be configured as equivalently as possible (same tools, budget, max-turns, prompts — neutrality is engineered, not assumed); Gemini has no home field in that set (Antigravity is not included); and the matrix roughly doubles run cost.</p>
+<hr />
+<h2 id="10-deliverables-what-the-final-product-looks-like">10. Deliverables: what the final product looks like</h2>
+<p>The reference point is swebench.com — a good north star. The finished product has four surfaces; the first three are required for v1.</p>
+<ol>
+<li><strong>Leaderboard site — the public face.</strong> A ranked table of models by overall pass@1, with category columns (A–D) and <code>cost-per-solved-task</code> sitting right next to the pass rate; each row links to that model's run details. All v1 runs use the single neutral harness (Section 9), so the headline number has one meaning. Backed by an in-repo results report that includes the judge-vs-human agreement number. Two deliberate differences from swebench.com: cost is a first-class column (SWE-bench largely ignores it), and the category breakdown exposes <em>where</em> a model wins — which is what turns a result into a recommendation.</li>
+<li><strong>GitHub repo — the substance.</strong> The task suite, the neutral runner, the graders, and contribution docs so others can submit tasks or models.</li>
+<li><strong>Writeup — the credibility.</strong> Methodology, the failure taxonomy with transcript excerpts as evidence, the harness-effect result (Section 9), and <strong>three concrete, prioritized model-behavior recommendations</strong> — the most important deliverable, because it demonstrates model taste rather than just engineering. The writeup doubles as the blog post and the interview artifact.</li>
+<li><strong>Dataset + per-run trajectories — the receipts.</strong> Every task plus the full logged transcript of every run, so anyone can audit a pass or failure.</li>
+</ol>
+<h3 id="positioning">Positioning</h3>
+<p>Do not position Builder-Bench as "SWE-bench but mine." Position it as the complementary benchmark for how non-engineers actually use coding agents (vague asks, long-running builds, spec-to-product, messy real-world data), with the cost angle SWE-bench lacks. More defensible, more memorable.</p>
+<h3 id="v1-vs-aspirational">v1 vs aspirational</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>v1</th>
+<th>Aspirational (v2+)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Leaderboard</td>
+<td>Static site generated from the author's own runs</td>
+<td>Live site with community model/task submissions</td>
+</tr>
+<tr>
+<td>Repo</td>
+<td>Tasks, neutral harness, graders, contribution docs</td>
+<td>Plugin ecosystem, CI that re-runs on new model releases</td>
+</tr>
+<tr>
+<td>Writeup</td>
+<td>One report + blog post with taxonomy and 3 recommendations</td>
+<td>Ongoing series; methodology paper</td>
+</tr>
+<tr>
+<td>Trajectories</td>
+<td>Logged transcripts downloadable per run</td>
+<td>Interactive in-browser trajectory viewer</td>
+</tr>
+<tr>
+<td>Submission flow</td>
+<td>None (author runs everything)</td>
+<td>Hosted submission + validation pipeline</td>
+</tr>
+<tr>
+<td>Coverage</td>
+<td>~26 tasks across A–D (Long Haul at the lite tier), 3 Anthropic tiers (Opus / Sonnet / Haiku), single harness</td>
+<td>Good Taste (E), Long-Haul-hard multi-session tasks, cross-lab models (GPT, Gemini) + the second-harness matrix, native harness per lab</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>v1 is intentionally a static, self-run artifact: no submission pipeline, no hosting ops. That burden is only worth taking on if the project gains traction.</p>
+</blockquote>
+<hr />
+<h2 id="11-milestones">11. Milestones</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Milestone</th>
+<th>Scope</th>
+<th>Rough effort</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M0: Scaffold</td>
+<td>Repo, task schema, Docker runner, plus one Long-Haul-lite task (b-01) end to end to validate the multi-step runner early</td>
+<td>Weekend 1</td>
+</tr>
+<tr>
+<td>M1: Core tasks</td>
+<td>10 to 12 tasks across the Full Build and Messy World categories with graders, built in priority order so a partial weekend still yields a coherent subset</td>
+<td>Weekend 2</td>
+</tr>
+<tr>
+<td>M2: Judge + validate</td>
+<td>LLM judge, human-labeled validation set, agreement reported</td>
+<td>Weekend 3</td>
+</tr>
+<tr>
+<td>M3: Full suite + run</td>
+<td>Remaining Vague Ask tasks, 1 to 2 more Long-Haul-lite tasks, run all models, collect results</td>
+<td>Weekend 4</td>
+</tr>
+<tr>
+<td>M4: Writeup + publish</td>
+<td>Taxonomy, recommendations, PAI long-horizon case study, blog post, repo polish, launch</td>
+<td>Weekend 5</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>Target: a credible v1 in about 4 to 5 weekends. If time runs short, the pre-agreed cut is the Sonnet mid-tier — Opus vs. Haiku still gives the cost-capability contrast — never the writeup. (Long-Haul-hard is already deferred to v2, and the cross-lab comparison is already out of scope; see Sections 5 and 9.)</p>
+</blockquote>
+<hr />
+<h2 id="12-success-criteria">12. Success criteria</h2>
+<p><strong>Project is successful if:</strong></p>
+<ul>
+<li>The repo runs end to end for someone else from a clean clone (reproducibility).</li>
+<li>The LLM judge agrees with human labels at a defensible rate (Cohen's kappa &gt;= 0.7, Section 6; report the actual number honestly).</li>
+<li>Results show a clear, defensible difference between models or a clear pattern of failures.</li>
+<li>The writeup names three specific model-behavior changes that a model team could act on.</li>
+</ul>
+<p><strong>Stretch signals:</strong></p>
+<ul>
+<li>Community engagement: stars, forks, or task contributions from others.</li>
+<li>A member of a model/eval team engages with or references the work.</li>
+</ul>
+<hr />
+<h2 id="13-risks-and-mitigations">13. Risks and mitigations</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tasks too easy or too hard (no signal)</td>
+<td>Pilot each task on one model first; tune difficulty before scaling the run</td>
+</tr>
+<tr>
+<td>LLM judge is unreliable</td>
+<td>Validate against human labels before trusting it; keep programmatic checks as the primary grader</td>
+</tr>
+<tr>
+<td>Scope creep (too many tasks/categories)</td>
+<td>Hard-cap v1 at 30 tasks; pre-agreed cut in Section 11 (Sonnet mid-tier)</td>
+</tr>
+<tr>
+<td>Reproducibility breaks across machines</td>
+<td>Docker + pinned versions + logged transcripts from day one</td>
+</tr>
+<tr>
+<td>Subscription usage windows throttle the record run</td>
+<td>~230 runs ride the Claude subscription's 5-hour/weekly limits; spread batches across days, or switch the record run to an API key (~$120–$470, Section 9) for batch pricing and clean accounting</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="14-open-questions-all-resolved">14. Open questions — all resolved</h2>
+<p>The decisions live in their home sections; this list records that each question was asked and closed.</p>
+<ul>
+<li><del>Which competitor models, and is API access straightforward?</del> <strong>Re-resolved (June 2026): descoped.</strong> v1 is Anthropic-only — Opus / Sonnet / Haiku through the Claude Agent SDK, covered by the author's subscription. OpenAI and Gemini models, and the second-harness matrix that only makes sense with them, are out of scope for v1 due to API cost; together they are the headline v2 extension. Details in <strong>Section 9</strong>.</li>
+<li><del>How many human labels are enough to trust the judge?</del> <strong>Resolved:</strong> hand-label the entire subjective subset (~50 to 70 transcripts), validate to Cohen's kappa &gt;= 0.7 against a human-human ceiling, and freeze a gold regression set. Full protocol in <strong>Section 6</strong>.</li>
+<li><del>Should Long Haul ship in v1 or move to v2?</del> <strong>Resolved:</strong> split it — Long-Haul-lite ships in v1, Long-Haul-hard (multi-session, context resets) is deferred to v2 behind a firm line. Tiers in <strong>Section 5</strong>.</li>
+<li><del>What license and contribution model?</del> <strong>Resolved (the one decision not recorded elsewhere in this PRD):</strong></li>
+<li><strong>License by asset type:</strong> code (harness, graders) under <strong>Apache 2.0</strong>; tasks/dataset under <strong>MIT or CC-BY-4.0</strong>, plus a contamination guard — a canary GUID, a "do not train on this" statement, and a small <strong>private held-out split</strong> kept out of the public repo (run manually in v1).</li>
+<li><strong>Contribution flow:</strong> GitHub PRs against the task template in <code>CONTRIBUTING.md</code>; CI validates each submission (schema check, grader runs in sandbox, reproducible from a clean clone); every task ships a reference solution and is piloted on &gt;=1 model to confirm signal.</li>
+<li><strong>Governance:</strong> DCO sign-off (not a CLA); author reviews all PRs. A hosted submission pipeline is deferred to v2.</li>
+</ul>
+</main>
+</body>
+</html>
