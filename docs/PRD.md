@@ -119,12 +119,14 @@ Grading implements the **Answer Key** from Section 5 and splits along the two Ou
 
 ### Validating the judge before trusting it
 
-Labels come from runs, not tasks, and only two categories need the judge — roughly 25 to 40 transcripts across the three-model contestant set — so v1 hand-labels **all** of it.
+The judge is itself a model, so its grades do not count until they are shown to match human judgment. The check is small: only two categories use the judge, so the transcripts that need human grading number roughly 25 to 40 (judged tasks × three models × a few attempts — a grade attaches to each *run*, not each task).
 
-- **Protocol:** label the entire subjective subset once; double-label ~15 to 20 cases to establish a human-human ceiling; freeze a ~20 to 30 case gold set as a regression check for rubric or judge-model changes.
-- **The bar:** Cohen's kappa >= 0.7 (~85% exact agreement), reported honestly. The judge is not expected to beat the human ceiling.
-- **On a miss:** fix the rubric, not the judge model, then re-label. Read every judge-vs-human disagreement — systematic bias is writeup material.
-- **Self-preference guard:** name the judge model, and stratify agreement **by contestant model** — a Claude judge must not be systematically kinder to Claude transcripts. If a skew appears, report it and rebalance the rubric.
+1. **Hand-grade everything once.** A human scores every judge-graded transcript against the same per-task rubric the judge uses. These human scores are the reference.
+2. **Establish the human ceiling.** Grade ~15 to 20 of those transcripts twice, independently, to measure how much two careful humans disagree. The judge cannot be expected to agree with a human more than humans agree with each other.
+3. **Compare judge to human.** The bar: Cohen's kappa >= 0.7 (roughly 85% exact agreement). Report the actual number, whatever it is.
+4. **On a miss, fix the rubric — not the judge.** Judge–human disagreement usually means the rubric is ambiguous; rewrite it, re-grade, re-measure. Read every disagreement along the way: a pattern in them is systematic bias, and writeup material.
+5. **Check for self-preference.** Name the judge model, and compute judge–human agreement separately for each contestant model — a Claude judge must not grade Claude transcripts more kindly. (Lower stakes while v1 is Anthropic-only; critical when v2 adds rival models.) If a skew appears, report it and rebalance the rubric.
+6. **Freeze a gold set.** Keep ~20 to 30 human-graded transcripts as a fixed regression test: any later change to the rubric or the judge model must still pass against them.
 
 ### What the Scorecard reports
 
