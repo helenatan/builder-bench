@@ -88,7 +88,17 @@ So where can a task's difficulty live? Not in the **Contestant** — that is *wh
 
 **A category is named for which part carries the difficulty.** (Full detail, including how the layers map onto the repo, in [`docs/eval-framework.md`](eval-framework.md).)
 
-That gives four hard parts but **five categories**, because the Goal fails in two distinct ways — unclear *now*, or clear but easy to lose *over time*. In reading order (the letters double as task-id and leaderboard prefixes): **A** Vague Ask · **B** Long Haul · **C** Full Build · **D** Messy World · **E** Good Taste. Sub-type menus and seed tasks live in [`docs/task-backlog.md`](task-backlog.md).
+There is one category per hard part — except the Goal, which gets two, because it can be hard in two different ways: unclear *now* (the agent must clarify it), or clear but easy to lose *over time* (the agent must hold onto it). That makes five categories:
+
+| Category | The hard part |
+|----------|---------------|
+| **A — Vague Ask** | the Goal, while it's unclear |
+| **B — Long Haul** | the Goal, holding over time |
+| **C — Full Build** | the Output |
+| **D — Messy World** | the Setup |
+| **E — Good Taste** | the Answer Key |
+
+The letters are the stable task-id and leaderboard prefixes. Sub-type menus and seed tasks live in [`docs/task-backlog.md`](task-backlog.md).
 
 Each category card below ends with a **PAI leverage** note — how much of that category can be sourced from PAI (the PM-AI Hiring Index), the real product the author built end to end with Claude Code. Section 8 details what PAI contributes and the boundaries on reusing it.
 
