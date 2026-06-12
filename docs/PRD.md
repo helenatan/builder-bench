@@ -77,11 +77,20 @@ Picture handing someone an assignment, then grading a stack of them:
 **Report layer — the verdict** *(across many runs)*
 - **Scorecard** — the grades rolled up: success rate (pass@1/@3) and cost.
 
-A **task** is exactly the Task layer; the Contestant, Output, and Scorecard live outside it. That is why the Contestant and the Scorecard are never what makes a task hard — the difficulty always sits in one of the other four parts (**Setup, Goal, Output, Answer Key**), and **a category is named for which one is the hard part.** (Full detail, including how the layers map onto the repo, in [`docs/eval-framework.md`](eval-framework.md).)
+A **task** is exactly the Task layer — Setup, Goal, and Answer Key, frozen in a folder. The Contestant, Output, and Scorecard only come into being when the task is run.
 
-Four parts but five categories, because the **Goal** can be hard in two ways: unclear *now*, or clear but easy to lose *over time*. In reading order (the letters double as task-id and leaderboard prefixes): **A** Vague Ask · **B** Long Haul · **C** Full Build · **D** Messy World · **E** Good Taste. Sub-type menus and seed tasks live in [`docs/task-backlog.md`](task-backlog.md).
+So where can a task's difficulty live? Not in the **Contestant** — that is *who we're testing*, and it changes every run. Not in the **Scorecard** — that is *how we measure*, and it is identical for everyone. The difficulty is designed into one of the other four parts:
 
-Each category below ends with a **PAI leverage** note: how much it can draw on PAI (the PM-AI Hiring Index), the real product the author built end to end with Claude Code. Section 8 details what PAI contributes and the boundaries on reusing it.
+- the **Setup** can hide a trap (flawed data),
+- the **Goal** can be hard to pin down, or hard to hold onto,
+- the **Output** demanded can be a whole working product,
+- the **Answer Key** can hinge on judgment, not just checks.
+
+**A category is named for which part carries the difficulty.** (Full detail, including how the layers map onto the repo, in [`docs/eval-framework.md`](eval-framework.md).)
+
+That gives four hard parts but **five categories**, because the Goal fails in two distinct ways — unclear *now*, or clear but easy to lose *over time*. In reading order (the letters double as task-id and leaderboard prefixes): **A** Vague Ask · **B** Long Haul · **C** Full Build · **D** Messy World · **E** Good Taste. Sub-type menus and seed tasks live in [`docs/task-backlog.md`](task-backlog.md).
+
+Each category card below ends with a **PAI leverage** note — how much of that category can be sourced from PAI (the PM-AI Hiring Index), the real product the author built end to end with Claude Code. Section 8 details what PAI contributes and the boundaries on reusing it.
 
 ### Category A — Vague Ask *(the hard part: the Goal, while it's unclear · "clarify it")*
 
