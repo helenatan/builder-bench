@@ -132,11 +132,17 @@ The judge is itself a model, so its grades do not count until they are shown to 
 
 Per task and per category:
 
-- **pass@1** and **pass@3** — single attempt, and best of three.
-- **Cost per solved task** — total spend on **all** attempts (failed retries are part of a model's real cost) divided by tasks solved. Undefined at zero solves: shown as "—", never ranked. Costs are imputed from token counts at list API prices regardless of how a run was paid for (payment mode noted per run), so comparisons stay apples-to-apples.
-- **Failure-mode tags** — from the taxonomy in Section 7.
+- **pass@1** — the share of tasks a model solves on a single attempt: one try, did it pass? The headline reliability number.
+- **pass@3** — the share of tasks solved within three independent attempts: a task counts as passed if *any* of the three tries passes. The gap between pass@3 and pass@1 shows how much a model depends on retries.
+- **Cost per solved task** — total spend on **all** attempts, including failed ones, divided by the number of tasks solved. Zero solves → shown as "—", never ranked. Costs are always imputed from token counts at list API prices (the actual payment mode is noted per run), so every model is compared on the same basis.
+- **Failure-mode tags** — which Section 7 failures showed up in each run.
 
-**Reading the numbers honestly.** With 5 to 8 tasks per category, one task flipping moves a category pass rate by 12 to 20 points — per-category results are directional, not rankings. So: confidence intervals on every pass rate; no ranking between models whose intervals overlap; overall pass@1 across the full suite is the primary comparison; and any category-level claim that feeds a recommendation gets extra attempts on that cell first.
+**Reading the numbers honestly.** With 5 to 8 tasks per category, one task flipping moves a category pass rate by 12 to 20 points. So:
+
+- Per-category results are directional, not rankings.
+- Every pass rate carries a confidence interval; models whose intervals overlap are not ranked against each other.
+- The primary comparison is overall pass@1 across the full suite.
+- Any category-level claim that feeds a recommendation gets extra attempts on that cell first.
 
 ---
 
