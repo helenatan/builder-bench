@@ -134,7 +134,9 @@ writes (`{workdir, transcript, final_text, ...}`) and prints a single JSON objec
 ## Failure taxonomy
 
 Runs are tagged with builder-persona failure modes: `premature-implementation`, `vision-drift`,
-`silent-assumptions`, `weak-self-verification`, `data-blindness`, `over-eagerness`. b-01 is
+`silent-assumptions`, `weak-self-verification`, `data-blindness`, `over-eagerness`,
+`fabricated-data`. All seven are mined from real PAI build transcripts
+([docs/pai-transcript-evidence.md](docs/pai-transcript-evidence.md)). b-01 is
 designed to surface `vision-drift` and `silent-assumptions` when the early dedupe rule is lost.
 
 ## Roadmap

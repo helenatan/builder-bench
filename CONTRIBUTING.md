@@ -71,7 +71,8 @@ The runner recomputes `passed` as `score >= pass_threshold`; graders don't need 
 (anything they print for it is overwritten).
 
 Use the shared taxonomy for `failure_tags`: `premature-implementation`, `vision-drift`,
-`silent-assumptions`, `weak-self-verification`, `data-blindness`, `over-eagerness`.
+`silent-assumptions`, `weak-self-verification`, `data-blindness`, `over-eagerness`,
+`fabricated-data`.
 
 ## Code contributions
 
