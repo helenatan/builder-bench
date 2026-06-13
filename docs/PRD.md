@@ -231,7 +231,7 @@ The reference point is swebench.com — a good north star. The finished product 
 
 1. **Leaderboard site — the public face.** A ranked table of models by overall pass@1, with category columns (A–D) and `cost-per-solved-task` sitting right next to the pass rate; each row links to that model's run details. All v1 runs use the single neutral harness (Section 9), so the headline number has one meaning. Backed by an in-repo results report that includes the judge-vs-human agreement number. Two deliberate differences from swebench.com: cost is a first-class column (SWE-bench largely ignores it), and the category breakdown exposes *where* a model wins — which is what turns a result into a recommendation.
 2. **GitHub repo — the substance.** The task suite, the neutral runner, the graders, and contribution docs so others can submit tasks or models.
-3. **Writeup — the credibility.** Methodology, the failure taxonomy with transcript excerpts as evidence, the harness-effect result (Section 9), and **three concrete, prioritized model-behavior recommendations** — the most important deliverable, because it demonstrates model taste rather than just engineering. The writeup doubles as the blog post and the interview artifact.
+3. **Writeup — the credibility.** Methodology, the failure taxonomy with transcript excerpts as evidence, the harness-neutrality rationale (Section 9 — why one harness is fair for an Anthropic-only v1; the measured harness effect is a v2 result), and **three concrete, prioritized model-behavior recommendations** — the most important deliverable, because it demonstrates model taste rather than just engineering. The writeup doubles as the blog post and the interview artifact.
 4. **Dataset + per-run trajectories — the receipts.** Every task plus the full logged transcript of every run, so anyone can audit a pass or failure.
 
 ### Positioning
@@ -259,7 +259,7 @@ Do not position Builder-Bench as "SWE-bench but mine." Position it as the comple
 |-----------|-------|--------------|
 | M0: Scaffold | Repo, task schema, Docker runner, plus one Long-Haul-lite task (b-01) end to end to validate the multi-step runner early | Weekend 1 |
 | M1: Core tasks | 10 to 12 tasks across the Full Build and Messy World categories with graders, built in priority order so a partial weekend still yields a coherent subset | Weekend 2 |
-| M2: Judge + validate | LLM judge, human-labeled validation set, agreement reported | Weekend 3 |
+| M2: Judge + validate | LLM judge + per-task rubrics; build the first Vague Ask task (a-05, already designed) so the judge is validated on **both** judge-graded categories — Vague Ask and subjective Messy World — not just one; hand-label the set, report agreement | Weekend 3 |
 | M3: Full suite + run | Remaining Vague Ask tasks, 1 to 2 more Long-Haul-lite tasks, run all models, collect results | Weekend 4 |
 | M4: Writeup + publish | Taxonomy, recommendations, PAI long-horizon case study, blog post, repo polish, launch | Weekend 5 |
 
@@ -288,7 +288,7 @@ Do not position Builder-Bench as "SWE-bench but mine." Position it as the comple
 | Risk | Mitigation |
 |------|------------|
 | Tasks too easy or too hard (no signal) | Pilot each task on one model first; tune difficulty before scaling the run |
-| LLM judge is unreliable | Validate against human labels before trusting it; keep programmatic checks as the primary grader |
+| LLM judge is unreliable | Validate against human labels before trusting it (κ ≥ 0.7 + frozen gold set, §6). Programmatic checks stay primary where they apply; for the judge-only categories (Vague Ask) the validation protocol — not a programmatic fallback — is the safeguard |
 | Scope creep (too many tasks/categories) | Hard-cap v1 at 30 tasks; pre-agreed cut in Section 11 (Sonnet mid-tier) |
 | Reproducibility breaks across machines | Docker + pinned versions + logged transcripts from day one |
 | Subscription usage windows throttle the record run | ~230 runs ride the Claude subscription's 5-hour/weekly limits; spread batches across days, or switch the record run to an API key (~$120–$470, Section 9) for batch pricing and clean accounting |
@@ -300,7 +300,7 @@ Do not position Builder-Bench as "SWE-bench but mine." Position it as the comple
 The decisions live in their home sections; this list records that each question was asked and closed.
 
 - ~~Which competitor models, and is API access straightforward?~~ **Re-resolved (June 2026): descoped.** v1 is Anthropic-only — Opus / Sonnet / Haiku through the Claude Agent SDK, covered by the author's subscription. OpenAI and Gemini models, and the second-harness matrix that only makes sense with them, are out of scope for v1 due to API cost; together they are the headline v2 extension. Details in **Section 9**.
-- ~~How many human labels are enough to trust the judge?~~ **Resolved:** hand-label the entire subjective subset (~50 to 70 transcripts), validate to Cohen's kappa >= 0.7 against a human-human ceiling, and freeze a gold regression set. Full protocol in **Section 6**.
+- ~~How many human labels are enough to trust the judge?~~ **Resolved:** hand-label the entire subjective subset (~25 to 40 transcripts across the three Anthropic tiers), validate to Cohen's kappa >= 0.7 against a human-human ceiling, and freeze a gold regression set. Full protocol in **Section 6**.
 - ~~Should Long Haul ship in v1 or move to v2?~~ **Resolved:** split it — Long-Haul-lite ships in v1, Long-Haul-hard (multi-session, context resets) is deferred to v2 behind a firm line. Tiers in **Section 5**.
 - ~~What license and contribution model?~~ **Resolved (the one decision not recorded elsewhere in this PRD):**
   - **License by asset type:** code (harness, graders) under **Apache 2.0**; tasks/dataset under **MIT or CC-BY-4.0**, plus a contamination guard — a canary GUID, a "do not train on this" statement, and a small **private held-out split** kept out of the public repo (run manually in v1).
