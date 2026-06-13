@@ -57,6 +57,11 @@ _HOST_BROKER_VARS = {
 }
 _CREDENTIAL_VARS = ("ANTHROPIC_API_KEY", "CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_AUTH_TOKEN")
 
+# Credentials that bill OUTSIDE the Claude subscription (pay-per-use API / gateway). v1 is
+# subscription-only, so these are stripped by default — billing then falls through to the
+# subscription login (`claude setup-token` / `claude login`). Override with --allow-api.
+_API_BILLING_VARS = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")
+
 
 def sanitize_host_env() -> list[str]:
     """Remove host-brokering vars from this process's env so the child `claude` authenticates
@@ -72,6 +77,16 @@ def has_credential() -> str | None:
         if os.environ.get(k):
             return k
     return None
+
+
+def enforce_subscription_billing() -> list[str]:
+    """Strip pay-per-use API credentials from this process's env so the child `claude` bills the
+    Claude subscription, not the API. Returns the names removed. The subscription login itself
+    (`claude setup-token` / `claude login`) lives in the CLI's credential store and is unaffected."""
+    removed = [k for k in _API_BILLING_VARS if os.environ.get(k)]
+    for k in removed:
+        os.environ.pop(k, None)
+    return removed
 
 
 # --------------------------------------------------------------------------- task loading
@@ -246,14 +261,23 @@ async def run_task(args: argparse.Namespace) -> int:
         removed = sanitize_host_env()
         if removed:
             print(f"[builder-bench] sanitized host-brokering env vars: {sorted(removed)}")
+    if not args.allow_api:
+        stripped = enforce_subscription_billing()
+        if stripped:
+            print(
+                f"[builder-bench] subscription-only mode: stripped {sorted(stripped)} so runs "
+                "bill to your Claude subscription, not the pay-per-use API. Use --allow-api to "
+                "permit API billing."
+            )
     cred = has_credential()
     if cred:
-        print(f"[builder-bench] using credential from ${cred}")
+        billing = "API (pay-per-use)" if cred == "ANTHROPIC_API_KEY" else "subscription / OAuth"
+        print(f"[builder-bench] using credential from ${cred} -> {billing}")
     else:
         print(
-            "[builder-bench] WARNING: no credential found "
-            f"({' / '.join(_CREDENTIAL_VARS)}). The agent will likely 401. "
-            "Set ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN.",
+            "[builder-bench] no credential env var set; the child `claude` will use your stored "
+            "login (subscription) if present. If you have not run `claude setup-token` / "
+            "`claude login`, the agent will 401.",
             file=sys.stderr,
         )
 
@@ -329,6 +353,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--keep-host-env", action="store_true",
         help="Do NOT strip host (Claude Desktop/Code) auth-brokering env vars. Off by default; "
              "stripping lets the child agent authenticate with your own credential.",
+    )
+    p.add_argument(
+        "--allow-api", action="store_true",
+        help="Permit pay-per-use Anthropic API billing. Off by default (subscription-only): "
+             "ANTHROPIC_API_KEY / ANTHROPIC_AUTH_TOKEN are stripped so runs bill to your Claude "
+             "subscription (claude setup-token / login).",
     )
     return p
 

@@ -44,8 +44,8 @@ M0 proves the neutral runner works end to end on one task with a clean programma
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e .            # or: pip install claude-agent-sdk pyyaml
 
-# 2. Authenticate the runner (see "Authentication" below)
-export ANTHROPIC_API_KEY=sk-ant-...     # or: claude setup-token
+# 2. Authenticate the runner on your Claude subscription (see "Authentication" below)
+claude setup-token          # one-time; stores an OAuth login the SDK reuses
 
 # 3. Run a task
 python -m harness.runner --task b-01 --model opus-4.6
@@ -66,21 +66,30 @@ python -m harness.runner --task b-01 --model opus-4.6 \
     [--sandbox auto|docker|local]
     [--budget-usd 2.0]           # per-attempt spend cap
     [--max-turns 40]
+    [--allow-api]                # opt into pay-per-use API billing (default: subscription only)
 ```
 
-## Authentication
+## Authentication — subscription by default
 
 The harness runs each model through the Claude Agent SDK, which drives the `claude` CLI as a
-subprocess. That subprocess needs its own credentials:
+subprocess. **v1 is subscription-only:** runs bill to your Claude subscription, not the
+pay-per-use API.
 
-- **API key:** `export ANTHROPIC_API_KEY=sk-ant-...` (pay-per-use API billing), **or**
-- **Subscription token:** run `claude setup-token` (or `claude login`) once to store an
-  OAuth credential the SDK will reuse.
+- **Subscription (default):** run `claude setup-token` (or `claude login`) once to store an
+  OAuth login the SDK reuses. The runner **strips `ANTHROPIC_API_KEY` and `ANTHROPIC_AUTH_TOKEN`
+  from the child env by default**, so a stray API key can't silently bill the API — billing
+  falls through to your subscription login.
+- **API (opt-in):** pass `--allow-api` and set `ANTHROPIC_API_KEY=sk-ant-...` to use pay-per-use
+  API billing instead (e.g. for an unthrottled, batch-priced record run).
+
+> Subscription runs are subject to your plan's rate limits (5-hour / weekly windows), so large
+> batches may need spreading across days. Cost-per-solved-task is still reported, imputed from
+> token counts at list prices regardless of how a run was paid for.
 
 > **Note for Claude Desktop "local agent mode":** inside a host-brokered session, auth is
 > provided to the in-session model by the host and is *not* inherited by spawned subprocesses.
-> A child `claude` will 401 unless you provide one of the credentials above. Run the benchmark
-> from a normal terminal with `ANTHROPIC_API_KEY` set (or after `claude setup-token`).
+> A child `claude` will 401 unless you have your own login. Run the benchmark from a normal
+> terminal after `claude setup-token`.
 
 ## Sandboxing
 
