@@ -20,3 +20,6 @@ results/runs/*
 
 # Generated leaderboard is committed by default (it is small); flip if you prefer not to.
 # results/leaderboard.json
+
+# Generated static site (Vercel builds site/index.html from results/leaderboard.html)
+site/index.html

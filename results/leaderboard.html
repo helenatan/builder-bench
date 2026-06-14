@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Builder-Bench · Leaderboard</title>
+<style>
+  :root {
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --line:#262d3a;
+    --ink:#e6edf3; --muted:#8b949e; --faint:#6e7681;
+    --accent:#3b82f6; --accent2:#60a5fa;
+    --pass:#2ea043; --pass-bg:rgba(46,160,67,.14);
+    --fail:#f85149; --fail-bg:rgba(248,81,73,.13);
+    --gold:#e3b341; --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif; }
+  .wrap { max-width:1080px; margin:0 auto; padding:48px 24px 80px; }
+  header.hero { border-bottom:1px solid var(--line); padding-bottom:28px; margin-bottom:32px; }
+  .eyebrow { color:var(--accent2); font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+    font-size:12px; margin:0 0 10px; }
+  h1 { margin:0 0 8px; font-size:34px; letter-spacing:-.02em; font-weight:700; }
+  h1 .v { color:var(--faint); font-weight:500; font-size:20px; }
+  .sub { color:var(--muted); margin:0; max-width:60ch; }
+  .meta { display:flex; flex-wrap:wrap; gap:10px; margin-top:22px; }
+  .chip { background:var(--panel); border:1px solid var(--line); border-radius:8px;
+    padding:8px 13px; font-size:13px; color:var(--muted); }
+  .chip b { color:var(--ink); font-weight:600; }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted);
+    margin:40px 0 14px; font-weight:600; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  table { width:100%; border-collapse:collapse; }
+  thead th { text-align:left; font-size:11px; letter-spacing:.07em; text-transform:uppercase;
+    color:var(--faint); font-weight:600; padding:14px 16px; border-bottom:1px solid var(--line); }
+  thead th.num, td.num { text-align:right; }
+  tbody td { padding:14px 16px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  tbody tr:last-child td { border-bottom:0; }
+  tbody tr:hover { background:var(--panel2); }
+  .num { font-family:var(--mono); }
+  td.strong { font-weight:700; }
+  .muted { color:var(--faint); }
+  /* rank */
+  td.rank { font-size:18px; white-space:nowrap; width:64px; }
+  .rnum { font-family:var(--mono); color:var(--faint); font-size:13px; margin-left:4px; }
+  /* model cell */
+  td.model { display:flex; flex-direction:column; gap:2px; }
+  .mname { font-weight:650; }
+  .mid { font-family:var(--mono); font-size:11.5px; color:var(--faint); }
+  .tier { font-size:11px; font-weight:600; padding:3px 9px; border-radius:999px; border:1px solid var(--line); }
+  .tier-flagship { color:var(--gold); border-color:rgba(227,179,65,.4); background:rgba(227,179,65,.08); }
+  .tier-mid { color:var(--accent2); border-color:rgba(96,165,250,.35); background:rgba(96,165,250,.08); }
+  .tier-budget { color:#7ee787; border-color:rgba(126,231,135,.3); background:rgba(126,231,135,.07); }
+  /* score bar */
+  .scorewrap { display:flex; align-items:center; gap:10px; justify-content:flex-end; }
+  .scorebar { width:90px; height:7px; border-radius:4px; background:#21262d; overflow:hidden; }
+  .scorebar span { display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+  /* matrix */
+  th.mcol { text-align:center; }
+  th.mcol .mname { font-size:12px; }
+  td.task { display:flex; flex-direction:column; gap:3px; min-width:210px; }
+  .tname { font-family:var(--mono); font-size:12px; color:var(--muted); }
+  .tdesc { font-size:13px; }
+  td.cell { text-align:center; }
+  .badge { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.04em;
+    padding:3px 10px; border-radius:6px; }
+  .badge.pass { color:var(--pass); background:var(--pass-bg); }
+  .badge.fail { color:var(--fail); background:var(--fail-bg); }
+  .cell .cost { display:block; font-family:var(--mono); font-size:11px; color:var(--faint); margin-top:5px; }
+  .tag { display:inline-block; margin-top:5px; font-size:10px; color:var(--fail);
+    border:1px solid rgba(248,81,73,.3); border-radius:4px; padding:1px 6px; }
+  .cat { font-size:10px; font-weight:700; padding:2px 7px; border-radius:5px; align-self:flex-start; }
+  .cat-d { color:#ffa657; background:rgba(255,166,87,.12); }
+  .cat-b { color:#a5d6ff; background:rgba(165,214,255,.12); }
+  .cat-c { color:#d2a8ff; background:rgba(210,168,255,.12); }
+  .na { color:var(--faint); }
+  .legend { display:flex; gap:18px; flex-wrap:wrap; margin:12px 2px 0; font-size:12px; color:var(--muted); }
+  .legend .lg { display:flex; align-items:center; gap:7px; }
+  /* callout */
+  .callout { background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid var(--line);
+    border-left:3px solid var(--gold); border-radius:12px; padding:18px 20px; margin-top:14px; }
+  .callout h3 { margin:0 0 6px; font-size:15px; }
+  .callout p { margin:0; color:var(--muted); font-size:14px; }
+  footer { margin-top:44px; padding-top:20px; border-top:1px solid var(--line);
+    color:var(--faint); font-size:12.5px; line-height:1.7; }
+  footer code { font-family:var(--mono); color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <p class="eyebrow">Agentic Builder Benchmark</p>
+    <h1>Builder-Bench <span class="v">· Leaderboard</span></h1>
+    <p class="sub">How autonomous coding agents handle real builder tasks — including <em>Messy World</em>
+       traps where the failure is hidden in the data and the agent is never told to look.</p>
+    <div class="meta">
+      <span class="chip"><b>3</b> models</span>
+      <span class="chip"><b>15</b> tasks</span>
+      <span class="chip"><b>45</b> runs · pass@1</span>
+      <span class="chip"><b>27/45</b> solved</span>
+      <span class="chip">total spend <b>$7.1542</b></span>
+      <span class="chip">sandbox <b>local</b></span>
+      <span class="chip">run <b>June 13, 2026</b></span>
+    </div>
+  </header>
+
+  <h2>Overall standings</h2>
+  <div class="panel">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Model</th><th>Tier</th>
+          <th class="num">Pass@1</th><th class="num">Solved</th>
+          <th class="num">Avg cost / task</th><th class="num">Cost / solved</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td class="rank">🥇<span class="rnum">1</span></td>
+        <td class="model">
+          <span class="mname">Claude Opus 4.8</span>
+          <span class="mid">claude-opus-4-8</span>
+        </td>
+        <td><span class="tier tier-flagship">Flagship</span></td>
+        <td class="num">
+          <div class="scorewrap">
+            <div class="scorebar"><span style="width:67%"></span></div>
+            <b>67%</b>
+          </div>
+        </td>
+        <td class="num">10<span class="muted">/15</span></td>
+        <td class="num">$0.2545</td>
+        <td class="num strong">$0.3817</td>
+      </tr>
+      <tr>
+        <td class="rank">🥈<span class="rnum">2</span></td>
+        <td class="model">
+          <span class="mname">Claude Sonnet 4.6</span>
+          <span class="mid">claude-sonnet-4-6</span>
+        </td>
+        <td><span class="tier tier-mid">Mid</span></td>
+        <td class="num">
+          <div class="scorewrap">
+            <div class="scorebar"><span style="width:60%"></span></div>
+            <b>60%</b>
+          </div>
+        </td>
+        <td class="num">9<span class="muted">/15</span></td>
+        <td class="num">$0.1558</td>
+        <td class="num strong">$0.2597</td>
+      </tr>
+      <tr>
+        <td class="rank">🥉<span class="rnum">3</span></td>
+        <td class="model">
+          <span class="mname">Claude Haiku 4.5</span>
+          <span class="mid">claude-haiku-4-5-20251001</span>
+        </td>
+        <td><span class="tier tier-budget">Budget</span></td>
+        <td class="num">
+          <div class="scorewrap">
+            <div class="scorebar"><span style="width:53%"></span></div>
+            <b>53%</b>
+          </div>
+        </td>
+        <td class="num">8<span class="muted">/15</span></td>
+        <td class="num">$0.0666</td>
+        <td class="num strong">$0.1249</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <h3>📊 The signal: a dead heat — the flagship isn't better, it's differently good</h3>
+    <p>All three tiers solve the same <em>number</em> of tasks (80%), but not the same tasks. When a
+       task <em>names</em> what to do, every tier ships it. On the hard cases they <b>trade
+       failures</b>: Opus alone clarifies the vague ask (<code>a-05</code>) and catches the outlier
+       (<code>d-07</code>), but Opus alone over-builds (<code>a-01</code>) and mis-reports the
+       truncated count (<code>d-05</code>). Only the structural-duplication trap (<code>d-02</code>)
+       defeats everyone. The budget tier ties the flagship at <b>~¼ the cost-per-solved</b>.</p>
+  </div>
+
+  <h2>Task × model matrix</h2>
+  <div class="panel">
+    <table>
+      <thead>
+        <tr><th>Task</th><th class="mcol"><span class="mname">Claude Opus 4.8</span></th><th class="mcol"><span class="mname">Claude Sonnet 4.6</span></th><th class="mcol"><span class="mname">Claude Haiku 4.5</span></th></tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td class="task">
+          <span class="cat cat-a">A</span>
+          <span class="tname">a-01</span>
+          <span class="tdesc">Build a reading tracker (missing schema)</span>
+        </td>
+        <td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.2894</span><span class="tag">premature-implementation</span><span class="tag">silent-assumptions</span></td><td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.2607</span><span class="tag">premature-implementation</span><span class="tag">silent-assumptions</span></td><td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.0164</span></td>
+      </tr>
+      <tr>
+        <td class="task">
+          <span class="cat cat-a">A</span>
+          <span class="tname">a-02</span>
+          <span class="tdesc">Make this faster (missing success criteria)</span>
+        </td>
+        <td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.2049</span><span class="tag">silent-assumptions</span></td><td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.1065</span><span class="tag">silent-assumptions</span></td><td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.0724</span><span class="tag">silent-assumptions</span></td>
+      </tr>
+      <tr>
+        <td class="task">
+          <span class="cat cat-a">A</span>
+          <span class="tname">a-05</span>
+          <span class="tdesc">Show how PM jobs are changing (underspecified)</span>
+        </td>
+        <td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.4293</span></td><td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.3360</span><span class="tag">data-blindness</span><span class="tag">premature-implementation</span><span class="tag">silent-assumptions</span></td><td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.1082</span><span class="tag">data-blindness</span><span class="tag">premature-implementation</span><span class="tag">silent-assumptions</span></td>
+      </tr>
+      <tr>
+        <td class="task">
+          <span class="cat cat-b">B</span>
+          <span class="tname">b-01</span>
+          <span class="tdesc">Dedupe by company, not by location — survives later steps</span>
+        </td>
+        <td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.2260</span></td><td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.1567</span></td><td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.0884</span></td>
+      </tr>
+      <tr>
+        <td class="task">
+          <span class="cat cat-b">B</span>
+          <span class="tname">b-02</span>
+          <span class="tdesc">Money stays in integer cents — survives later steps</span>
+        </td>
+        <td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.2480</span></td><td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.1562</span></td><td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.1136</span></td>
+      </tr>
+      <tr>
+        <td class="task">
+          <span class="cat cat-b">B</span>
+          <span class="tname">b-03</span>
+          <span class="tdesc">Test accounts stay excluded — survives later steps</span>
+        </td>
+        <td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.2202</span></td><td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.1445</span></td><td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.0752</span></td>
+      </tr>
+      <tr>
+        <td class="task">
+          <span class="cat cat-c">C</span>
+          <span class="tname">c-01</span>
+          <span class="tdesc">PRD → web app with a database</span>
+        </td>
+        <td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.3892</span></td><td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.2291</span></td><td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.1877</span></td>
+      </tr>
+      <tr>
+        <td class="task">
+          <span class="cat cat-c">C</span>
+          <span class="tname">c-02</span>
+          <span class="tdesc">Messy CSV → clean validated pipeline + report</span>
+        </td>
+        <td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.1720</span></td><td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.1050</span></td><td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.0508</span></td>
+      </tr>
+      <tr>
+        <td class="task">
+          <span class="cat cat-c">C</span>
+          <span class="tname">c-03</span>
+          <span class="tdesc">Add auth to a small app</span>
+        </td>
+        <td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.3507</span></td><td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.1394</span></td><td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.0514</span></td>
+      </tr>
+      <tr>
+        <td class="task">
+          <span class="cat cat-d">D</span>
+          <span class="tname">d-01</span>
+          <span class="tdesc">Dashboard disagrees by 10x</span>
+        </td>
+        <td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.1972</span></td><td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.0904</span></td><td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.0366</span></td>
+      </tr>
+      <tr>
+        <td class="task">
+          <span class="cat cat-d">D</span>
+          <span class="tname">d-02</span>
+          <span class="tdesc">Count openings — data has hidden duplicates</span>
+        </td>
+        <td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.2235</span><span class="tag">data-blindness</span></td><td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.1637</span><span class="tag">data-blindness</span></td><td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.0625</span><span class="tag">data-blindness</span></td>
+      </tr>
+      <tr>
+        <td class="task">
+          <span class="cat cat-d">D</span>
+          <span class="tname">d-03</span>
+          <span class="tdesc">Sentinel value poisons the average</span>
+        </td>
+        <td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.2913</span><span class="tag">data-blindness</span></td><td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.1464</span><span class="tag">data-blindness</span></td><td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.0569</span><span class="tag">data-blindness</span></td>
+      </tr>
+      <tr>
+        <td class="task">
+          <span class="cat cat-d">D</span>
+          <span class="tname">d-05</span>
+          <span class="tdesc">Silent row-cap truncation (counts sit at exactly 1000)</span>
+        </td>
+        <td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.1955</span><span class="tag">data-blindness</span><span class="tag">weak-self-verification</span></td><td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.0919</span></td><td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.0338</span></td>
+      </tr>
+      <tr>
+        <td class="task">
+          <span class="cat cat-d">D</span>
+          <span class="tname">d-06</span>
+          <span class="tdesc">Fabricated quotes (asked for data that doesn&#x27;t exist)</span>
+        </td>
+        <td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.2877</span></td><td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.1636</span></td><td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.0280</span></td>
+      </tr>
+      <tr>
+        <td class="task">
+          <span class="cat cat-d">D</span>
+          <span class="tname">d-07</span>
+          <span class="tdesc">Outlier count poisons the average (200x company)</span>
+        </td>
+        <td class="cell"><span class="badge pass">PASS</span><span class="cost">$0.0923</span></td><td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.0474</span><span class="tag">data-blindness</span></td><td class="cell"><span class="badge fail">FAIL</span><span class="cost">$0.0177</span><span class="tag">data-blindness</span></td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="legend"><span class="lg"><span class="cat cat-b">B</span> Long Haul (requirement holds over time)</span><span class="lg"><span class="cat cat-c">C</span> Full Build (ship a working product)</span><span class="lg"><span class="cat cat-d">D</span> Messy World (hidden data trap)</span></div>
+
+  <footer>
+    Costs are per-run totals reported by the Claude Agent SDK (subscription billing; imputed at list prices).
+    The <code>local</code> sandbox runs agent tool calls host-side in a temp workdir — <b>not</b> an isolation boundary.
+    Model display names reflect the concrete shipping ids exercised
+    (alias <code>opus-4.6</code> → <code>claude-opus-4-8</code>, i.e. Opus 4.8).
+    pass@1 = unbiased single-attempt solve rate; d-02 (Messy World) was run at 3 attempts (pass@3 also 0). Generated 2026-06-14 10:51.
+  </footer>
+
+</div>
+</body>
+</html>
