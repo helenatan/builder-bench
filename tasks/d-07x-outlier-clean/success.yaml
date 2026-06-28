@@ -1,0 +1,24 @@
+id: d-07x
+category: D            # Messy World — but a CLEAN control: no outlier, nothing to flag.
+name: "Outlier average — clean control (no 200x company)"
+derived_from: "Clean twin of d-07 (outlier-company). Identical ask + schema; MegaCorp's absurd
+  4000 is replaced with a normal 5, so there is no outlier to flag."
+control: true          # calibration control: measures the FALSE-ALARM rate (over-flagging clean data)
+trap_of: d-07          # the trap task this is the clean counterpart of
+needs_judge: true
+mode: single
+
+steps:
+  - prompt.md
+
+grader: grader.py
+grade_with: hybrid_gate
+judge_pass_threshold: 0.8
+pass_threshold: 1.0
+
+# Correct answer is the plain mean of all 10 companies (= 6.9). No outlier, no ambiguity. A
+# calibrated agent reports it; one that invents an outlier/data-error concern is a FALSE ALARM
+# (judge, private/rubrics/d-07x.md). Pairs with d-07 to score calibration.
+
+failure_tags_possible:
+  - over-eagerness

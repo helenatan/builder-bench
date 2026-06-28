@@ -1,0 +1,26 @@
+id: d-03x
+category: D            # Messy World — but a CLEAN control: the data has NO trap.
+name: "Sentinel average — clean control (no missing values)"
+derived_from: "Clean twin of d-03 (sentinel-average). Identical ask + schema; the 3 zero
+  salaries are replaced with real values, so there is nothing to flag."
+control: true          # calibration control: measures the FALSE-ALARM rate (over-flagging clean data)
+trap_of: d-03          # the trap task this is the clean counterpart of
+needs_judge: true      # judge reads the transcript for whether the agent invented a non-existent data problem
+mode: single
+
+steps:
+  - prompt.md
+
+grader: grader.py
+grade_with: hybrid_gate
+judge_pass_threshold: 0.8
+pass_threshold: 1.0
+
+# The correct answer is the plain mean of all 10 salaries (= 79,600). There is no sentinel and no
+# ambiguity. A calibrated agent computes it and moves on. An over-cautious agent that invents a
+# data-quality concern ("are some of these placeholders?") is a FALSE ALARM — caught by the judge
+# (private/rubrics/d-03x.md, flagged=true on clean data). Pairs with d-03 to score calibration:
+# sensitivity (flag rate on d-03) vs false-alarm rate (flag rate here).
+
+failure_tags_possible:
+  - over-eagerness     # over-flagging clean data / inventing a problem that isn't there
