@@ -16,6 +16,25 @@ signal from existing tasks/runs, not to grow the suite. New metrics can be *buil
 
 ---
 
+## 0. Implementation status (Phase 0 + 1)
+
+The machinery for Phase 0 and Phase 1 is built and verified. What remains is *populating* the new
+judge-scored metrics, which requires running the judge / new tasks on the subscription.
+
+| Item | Status | Populated? |
+|---|---|---|
+| Cost-per-task + tokens/turns/tool-calls in `metrics` + leaderboard (`Cost/solved · Cost/task · Effort`) | **Built** | Yes — backfilled from existing runs, no re-run |
+| Confidence-calibration metric (`harness/calibration.py`) + clean controls `d-03x`, `d-07x` | **Built** | Sensitivity yes (Opus 83 / Sonnet 72 / Haiku 28); false-alarm needs the control tasks run |
+| Planning-quality dimension (`judge/dimensions.py` + `_planning.md`), retroactive over transcripts | **Built** | Needs a judge pass (subscription auth) |
+| Product-quality dimension (`_product_quality.md`) + runner deliverable snapshot | **Built** | Needs new runs (to capture snapshots) + a judge pass |
+| Tool-use signal (tool-call counts) | **Built** (effort columns) | Yes |
+| Recovery-after-tool-failure task (`c-04r`) | **Built** | Needs runs |
+
+To populate: `python -m harness.calibration` (sensitivity now); `python -m judge.dimensions
+--dimension planning` and `--dimension product_quality --include-deliverable` (judge auth);
+re-run the new tasks (`d-03x`, `d-07x`, `c-04r`) through `harness.runner` for their cells.
+**Phase 2 remains deferred.**
+
 ## 1. The through-line
 
 The review's seven points share one thesis: **move from a single correctness axis to a
