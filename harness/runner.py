@@ -151,6 +151,44 @@ def render_transcript_md(session: Any, task_cfg: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+# Files worth keeping for post-hoc product-quality scoring; everything else (binaries, caches,
+# deps, vcs) is skipped so the snapshot stays a small, text-only picture of what was built.
+_SNAPSHOT_EXTS = {".py", ".js", ".ts", ".jsx", ".tsx", ".go", ".rb", ".rs", ".java", ".sh",
+                  ".sql", ".html", ".css", ".md", ".txt", ".json", ".yaml", ".yml", ".toml"}
+_SNAPSHOT_SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build",
+                       ".pytest_cache", ".mypy_cache", "fixtures"}
+
+
+def snapshot_deliverable(workdir: Path, attempt_dir: Path, max_files: int = 40,
+                         max_bytes: int = 64_000) -> int:
+    """Copy a capped, text-only snapshot of the built artifact into attempt-N/deliverable/, so the
+    product-quality dimension (judge/dimensions.py) can read what was shipped after teardown.
+    Skips the provided fixtures/, caches, deps, and vcs. Returns the number of files captured."""
+    dest = attempt_dir / "deliverable"
+    n = 0
+    try:
+        for p in sorted(workdir.rglob("*")):
+            if n >= max_files:
+                break
+            if p.is_dir() or p.suffix.lower() not in _SNAPSHOT_EXTS:
+                continue
+            if any(part in _SNAPSHOT_SKIP_DIRS for part in p.relative_to(workdir).parts):
+                continue
+            try:
+                if p.stat().st_size > max_bytes:
+                    continue
+                rel = p.relative_to(workdir)
+                out = dest / rel
+                out.parent.mkdir(parents=True, exist_ok=True)
+                out.write_text(p.read_text(errors="replace"))
+                n += 1
+            except Exception:  # noqa: BLE001
+                continue
+    except Exception:  # noqa: BLE001
+        return n
+    return n
+
+
 def run_grader(task_cfg: dict[str, Any], session: Any, attempt_dir: Path, workdir: Path) -> dict[str, Any]:
     grader = task_cfg["_dir"] / "grader.py"
     if not grader.is_file():
@@ -318,6 +356,9 @@ async def run_attempt(task_cfg, model, sandbox_kind, attempt_dir, budget_usd, ma
         "judge": judge_block,
     }
     (attempt_dir / "result.json").write_text(json.dumps(result, indent=2))
+    # Capture a small text-only snapshot of the built artifact before teardown, so the
+    # cross-cutting product-quality dimension can be scored after the fact (docs/v2-plan.md).
+    snapshot_deliverable(workdir, attempt_dir)
     sandbox.teardown()
     verdict = "PASS" if result["passed"] else "FAIL"
     print(
