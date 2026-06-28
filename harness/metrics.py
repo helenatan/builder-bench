@@ -33,6 +33,19 @@ def cost_per_solved(total_cost_usd: float, num_solved: int) -> float | None:
     return total_cost_usd / num_solved
 
 
+def cost_per_task(total_cost_usd: float, num_attempts: int) -> float | None:
+    """Dollars per attempt — a pure *price* number, always defined when any attempt ran.
+
+    Distinct from cost_per_solved: cost_per_solved folds in reliability (failed/retried spend
+    lands in the numerator, only successes in the denominator) and is the headline; cost_per_task
+    is the stable-denominator companion that still reports a number on zero-solve cells. Their
+    ratio (cost_per_solved / cost_per_task) approximates the "reliability tax" of retries and
+    dead ends. See docs/v2-plan.md Phase 0."""
+    if num_attempts <= 0:
+        return None
+    return total_cost_usd / num_attempts
+
+
 def aggregate(attempts: list[dict[str, Any]], ks: tuple[int, ...] = (1, 3)) -> dict[str, Any]:
     """Roll up a list of attempt results into reportable metrics.
 
@@ -44,12 +57,18 @@ def aggregate(attempts: list[dict[str, Any]], ks: tuple[int, ...] = (1, 3)) -> d
     total_cost = sum(float(a.get("cost_usd", 0.0)) for a in attempts)
     scores = [float(a.get("score", 0.0)) for a in attempts]
 
+    def _isum(key: str) -> int:
+        return sum(int(a.get(key, 0) or 0) for a in attempts)
+
     pass_at: dict[str, float] = {}
     for k in ks:
         if k <= n:
             pass_at[f"pass@{k}"] = round(pass_at_k(n, c, k), 4)
 
     cps = cost_per_solved(total_cost, c)
+    cpt = cost_per_task(total_cost, n)
+    # Effort signals (summed across all attempts) — the raw material for the economic profile
+    # (PRD §7-adjacent / docs/v2-plan.md Phase 0). tool_calls is added by the runner per attempt.
     return {
         "attempts": n,
         "solved": c,
@@ -58,4 +77,9 @@ def aggregate(attempts: list[dict[str, Any]], ks: tuple[int, ...] = (1, 3)) -> d
         "best_score": round(max(scores), 4) if n else 0.0,
         "total_cost_usd": round(total_cost, 6),
         "cost_per_solved_usd": round(cps, 6) if cps is not None else None,
+        "cost_per_task_usd": round(cpt, 6) if cpt is not None else None,
+        "input_tokens": _isum("input_tokens"),
+        "output_tokens": _isum("output_tokens"),
+        "num_turns": _isum("num_turns"),
+        "tool_calls": _isum("tool_calls"),
     }

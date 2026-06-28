@@ -128,6 +128,7 @@ def load_task(task_dir: Path) -> dict[str, Any]:
     cfg.setdefault("id", task_dir.name)
     cfg.setdefault("category", "?")
     cfg.setdefault("pass_threshold", 1.0)
+    cfg.setdefault("grader", "grader.py")
     return cfg
 
 
@@ -196,6 +197,27 @@ def run_grader(task_cfg: dict[str, Any], session: Any, attempt_dir: Path, workdi
         }
 
 
+async def run_judge(task_cfg: dict[str, Any], session: Any, attempt_dir: Path, judge_model: str) -> dict[str, Any] | None:
+    """Invoke the LLM judge on this attempt's transcript. Returns the judge block (or an error
+    block) and writes judge.json. None if the judge package/rubric is unavailable."""
+    try:
+        from judge import judge_transcript
+    except Exception as exc:  # noqa: BLE001
+        return {"error": f"judge unavailable: {type(exc).__name__}: {exc}"}
+
+    transcript = session.to_dict()
+    try:
+        result = await judge_transcript(task_cfg["id"], transcript, judge_model=judge_model)
+    except Exception as exc:  # noqa: BLE001 — never let the judge crash a run
+        return {"error": f"judge raised: {type(exc).__name__}: {exc}"}
+    if result is None:
+        return {"error": f"no rubric for task '{task_cfg['id']}'"}
+
+    block = result.to_dict()
+    (attempt_dir / "judge.json").write_text(json.dumps(block, indent=2))
+    return block
+
+
 def update_leaderboard(row: dict[str, Any]) -> None:
     data = {"rows": []}
     if LEADERBOARD.is_file():
@@ -209,7 +231,7 @@ def update_leaderboard(row: dict[str, Any]) -> None:
 
 
 # --------------------------------------------------------------------------- run loop
-async def run_attempt(task_cfg, model, sandbox_kind, attempt_dir, budget_usd, max_turns) -> dict[str, Any]:
+async def run_attempt(task_cfg, model, sandbox_kind, attempt_dir, budget_usd, max_turns, judge_model) -> dict[str, Any]:
     attempt_dir.mkdir(parents=True, exist_ok=True)
     sandbox = get_sandbox(sandbox_kind, task_cfg["_dir"], attempt_dir)
     workdir = sandbox.setup()
@@ -227,20 +249,73 @@ async def run_attempt(task_cfg, model, sandbox_kind, attempt_dir, budget_usd, ma
     (attempt_dir / "transcript.json").write_text(json.dumps(session.to_dict(), indent=2))
     (attempt_dir / "transcript.md").write_text(render_transcript_md(session, task_cfg))
 
-    grade = run_grader(task_cfg, session, attempt_dir, workdir)
-    if "passed" not in grade:
+    has_grader = (task_cfg["_dir"] / task_cfg.get("grader", "grader.py")).is_file()
+    grade = run_grader(task_cfg, session, attempt_dir, workdir) if has_grader else None
+    if grade is not None and "passed" not in grade:
         grade["passed"] = float(grade.get("score", 0.0)) >= float(task_cfg["pass_threshold"])
+
+    # Behavioral grading via the LLM judge against a per-task rubric (Messy World, Vague Ask).
+    judge_block = None
+    if task_cfg.get("needs_judge"):
+        judge_block = await run_judge(task_cfg, session, attempt_dir, judge_model)
+
+    # How the final score is decided:
+    #   programmatic  — the grader gates pass/fail; the judge (if any) is REPORTED alongside but
+    #                   does not move the score until judge–human agreement is validated (PRD §6).
+    #                   This covers Full Build, Long Haul, and (for now) hybrid Messy World.
+    #   judge         — Vague Ask: there is no deliverable to check, so the judge IS the score.
+    grade_with = task_cfg.get("grade_with") or ("programmatic" if has_grader else "judge")
+    threshold = float(task_cfg["pass_threshold"])
+    if grade_with == "judge":
+        jscore = float((judge_block or {}).get("judge_score", 0.0))
+        score, passed = jscore, jscore >= threshold
+        tags = (judge_block or {}).get("failure_tags", []) or []
+        details = (judge_block or {}).get("rationale", "") or "judge produced no rationale"
+    elif grade_with == "hybrid_gate":
+        # Both programmatic AND judge must clear their respective thresholds.
+        # judge_pass_threshold defaults to 0.8 so only a clean "pass" label (1.0) qualifies.
+        judge_thresh = float(task_cfg.get("judge_pass_threshold", 0.8))
+        grade = grade or {"score": 0.0, "passed": False, "failure_tags": ["no-grader"],
+                          "details": "no grader.py"}
+        prog_score = float(grade.get("score", 0.0))
+        prog_passed = prog_score >= threshold
+        jscore = float((judge_block or {}).get("judge_score", 0.0))
+        judge_passed = jscore >= judge_thresh
+        score = prog_score
+        passed = prog_passed and judge_passed
+        tags = list(grade.get("failure_tags", []) or [])
+        if not judge_passed:
+            jtags = list((judge_block or {}).get("failure_tags", []) or [])
+            tags = list(dict.fromkeys(tags + jtags + ["weak-self-verification"]))
+        prog_status = "OK" if prog_passed else f"FAIL (score={prog_score:.2f})"
+        judge_status = "OK" if judge_passed else f"FAIL (score={jscore:.1f} < {judge_thresh:.1f})"
+        details = (grade.get("details", "") or "") + f" | judge gate: {judge_status}"
+    else:
+        grade = grade or {"score": 0.0, "passed": False, "failure_tags": ["no-grader"],
+                          "details": "no grader.py and grade_with is not 'judge'"}
+        score, passed = float(grade.get("score", 0.0)), bool(grade.get("passed"))
+        tags, details = grade.get("failure_tags", []), grade.get("details", "")
+
     result = {
-        "score": float(grade.get("score", 0.0)),
-        "passed": bool(grade.get("passed")),
-        "failure_tags": grade.get("failure_tags", []),
-        "details": grade.get("details", ""),
+        "score": score,
+        "passed": passed,
+        "grade_with": grade_with,
+        "failure_tags": tags,
+        "details": details,
         "cost_usd": session.cost_usd,
         "input_tokens": session.input_tokens,
         "output_tokens": session.output_tokens,
         "num_turns": session.num_turns,
+        "tool_calls": sum(
+            1
+            for s in session.steps
+            for m in s.messages
+            for b in m.get("content", [])
+            if b.get("block") == "tool_use"
+        ),
         "session_error": session.error,
         "grade": grade,
+        "judge": judge_block,
     }
     (attempt_dir / "result.json").write_text(json.dumps(result, indent=2))
     sandbox.teardown()
@@ -303,6 +378,7 @@ async def run_task(args: argparse.Namespace) -> int:
             res = await run_attempt(
                 task_cfg, args.model, sandbox_kind,
                 run_root / f"attempt-{i}", args.budget_usd, args.max_turns,
+                args.judge_model,
             )
         except Exception as exc:  # noqa: BLE001
             print(f"  [error] attempt {i} crashed: {type(exc).__name__}: {exc}", file=sys.stderr)
@@ -349,6 +425,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--budget-usd", type=float, default=2.0,
                    help="Per-attempt spend cap in USD (default 2.0)")
     p.add_argument("--max-turns", type=int, default=40, help="Max agent turns per attempt")
+    p.add_argument(
+        "--judge-model", default="claude-sonnet-4-6",
+        help="Model the LLM judge uses to grade transcripts on tasks with needs_judge: true "
+             "(default claude-sonnet-4-6). Named so judge-vs-human agreement can be checked "
+             "per contestant model (PRD §6).",
+    )
     p.add_argument(
         "--keep-host-env", action="store_true",
         help="Do NOT strip host (Claude Desktop/Code) auth-brokering env vars. Off by default; "
