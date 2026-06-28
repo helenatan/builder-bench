@@ -235,16 +235,38 @@ def load_rows() -> list[dict[str, Any]]:
     return list(seen.values())
 
 
+def _count_tool_calls(run_path: str) -> int:
+    """Count tool_use blocks in a run's transcript.json — the backfill path for runs that
+    predate the runner recording tool_calls directly."""
+    if not run_path:
+        return 0
+    p = REPO_ROOT / run_path / "attempt-1" / "transcript.json"
+    try:
+        steps = json.loads(p.read_text()).get("steps", [])
+    except Exception:  # noqa: BLE001
+        return 0
+    return sum(
+        1
+        for s in steps
+        for m in s.get("messages", [])
+        for b in (m.get("content") or [])
+        if isinstance(b, dict) and b.get("block") == "tool_use"
+    )
+
+
 def _row_effort(r: dict[str, Any]) -> tuple[int, int, int]:
     """(tool_calls, num_turns, output_tokens) for a leaderboard row. Newer rows carry these
     fields directly (added by metrics.aggregate); older rows predate them, so fall back to the
-    run's attempt-1 result.json. Either way no re-run is needed to surface the effort profile."""
+    run's attempt-1 result.json, and finally to counting the transcript. Either way no re-run is
+    needed to surface the effort profile."""
     tc, nt, ot = r.get("tool_calls"), r.get("num_turns"), r.get("output_tokens")
     if tc is None or nt is None or ot is None:
         res = _read_result(r.get("run_path", ""))
         tc = tc if tc is not None else res.get("tool_calls")
         nt = nt if nt is not None else res.get("num_turns")
         ot = ot if ot is not None else res.get("output_tokens")
+    if not tc:  # old runs: derive from the transcript
+        tc = _count_tool_calls(r.get("run_path", ""))
     return int(tc or 0), int(nt or 0), int(ot or 0)
 
 
