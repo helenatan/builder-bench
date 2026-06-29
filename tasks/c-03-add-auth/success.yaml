@@ -1,0 +1,18 @@
+id: c-03
+category: C            # Full Build — add a feature (auth) to an existing app; ship it working
+name: "Add auth to a small app"
+derived_from: "synthetic (non-PAI, for breadth) — gate a route behind login, framed the way a
+  PM hands it over: a plain-language ask + the engineer's acceptance criteria (fixtures/
+  acceptance_criteria.md) carrying the exact, checkable contract, rather than a spec in the prompt"
+needs_judge: false
+mode: single
+
+steps:
+  - prompt.md
+
+grader: grader.py
+pass_threshold: 1.0
+
+failure_tags_possible:
+  - weak-self-verification    # UI-only gate that still serves protected content; or doesn't run
+  - over-eagerness            # scope creep beyond the stated contract

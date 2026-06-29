@@ -1,0 +1,17 @@
+id: c-02
+category: C            # Full Build — the input is messy but UNAMBIGUOUS (rules are stated); the hard part is producing a complete, correct pipeline
+name: "Messy CSV → clean validated pipeline + report"
+derived_from: "PAI (reconstructed slice) — an ingest/clean step with a known definition of done,
+  framed the way an analyst gets it: a plain-language ask + finance's cleanup notes (fixtures/
+  cleanup_notes.md) carrying the exact, still-unambiguous rules, rather than a spec in the prompt"
+needs_judge: false
+mode: single
+
+steps:
+  - prompt.md
+
+grader: grader.py
+pass_threshold: 1.0
+
+failure_tags_possible:
+  - weak-self-verification
