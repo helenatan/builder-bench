@@ -16,6 +16,7 @@ pile of static HTML with inlined CSS — no network, no build step on the host.
 from __future__ import annotations
 
 import argparse
+import base64
 import html
 import json
 import math
@@ -81,7 +82,7 @@ TASK_HEADLINE = {
     "a-05": "Show how PM jobs are changing — an underspecified analysis ask",
     "b-01": "Dedup postings by company — the rule must hold across a 6-step merge",
     "b-02": "Keep money in integer cents through a 6-step pipeline with a discount",
-    "b-03": "Exclude test accounts from every metric, across six metrics",
+    "b-03": "Rebuild a metrics summary from a screenshot — keeping test accounts excluded",
     "c-01": "Turn a one-page PRD into a working CRUD API with notes + cascade",
     "c-02": "Clean a messy, multi-format CSV into a validated pipeline",
     "c-03": "Add login, protect two routes, logout + rate-limit on an existing app",
@@ -100,7 +101,7 @@ TASK_ABOUT = {
     "a-05": "An underspecified analysis ask — does the agent surface what “changing” means before building?",
     "b-01": "A dedup-by-company rule (normalize case/whitespace, ignore location) stated once must still hold after a second file is merged in at step 4.",
     "b-02": "An integer-cents money convention must survive a six-step pipeline — including a 7% discount with half-up rounding — without losing pennies.",
-    "b-03": "A test-account exclusion rule must hold across six metrics, including a new referrals file where the test accounts are referrers.",
+    "b-03": "A PM asks, casually, for “this month's summary — like the screenshot.” The only place the “exclude internal/test accounts” rule appears is a footnote in the mockup image: does the agent open it, infer the format, and hold the rule as later steps add a metric and a brand-new referrals file?",
     "c-01": "Turn a one-page PRD into a working CRUD API with validation, a status filter, a notes sub-resource, cascade delete, and persistence across a restart.",
     "c-02": "Build a pipeline that cleans a messy, multi-format CSV (accounting negatives, four date formats, duplicates) into validated output with a monthly rollup.",
     "c-03": "Add working authentication to an existing app: protect two routes, support logout, and rate-limit login.",
@@ -119,7 +120,7 @@ TASK_ANSWER_KEY = {
     "a-05": "No fixed artifact. Correct = surface what “changing” should mean (volume? seniority? remote?) and flag the thin ~90-day window before building.",
     "b-01": "Acme Corp = 4 unique openings across both files (dedup by company + normalized title; case/whitespace variants are one role). Strip-only gives 7; the location-inflated raw count is 12 — both wrong. The rule must survive the step-4 merge.",
     "b-02": "Raw grand total = 18,090 cents and discounted total = 16,825 cents (7% off, rounded half-up), with every amount, discount, and installment stored as integer cents — no floating-dollar drift across six steps.",
-    "b-03": "Active users 7 · revenue 540 · avg events/user 3.0 · power users 2 · avg revenue/user 77.14 · successful referrals 6 — all six computed with test accounts (ids 8–10) excluded, including from the referrals file.",
+    "b-03": "Active users 7 · revenue $540 · avg revenue/user $77.14 · avg events/user 3.0 · successful referrals 6 — every figure computed with internal/test accounts (ids 8–10) excluded, per the screenshot footnote, including the new referrals file. The drift tell: re-including them inflates revenue to $150,525.",
     "c-01": "A booting API whose CRUD works, that validates input (400s), filters by status, supports a notes sub-resource, cascades note deletion, and persists applications and notes across a restart.",
     "c-02": "10 clean rows from 15 raw (3 missing + 2 duplicates dropped), four date formats normalized and accounting-negative amounts parsed; total = 5516.05, reconciled by category and by month.",
     "c-03": "POST /login sets a session cookie; /dashboard and /settings both return 401 without it and 200 with it; logout invalidates the session; login returns 429 after repeated failures.",
@@ -197,6 +198,40 @@ def load_task_prompt(task_id: str) -> list[tuple[str, str]]:
         label = f"Step {i + 1}" if len(files) > 1 else "Prompt"
         out.append((label, f.read_text().strip()))
     return out
+
+
+_IMG_MIME = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+             ".gif": "image/gif", ".webp": "image/webp"}
+
+
+def inline_task_images(task_id: str) -> str:
+    """Inline any image fixtures (e.g. a PM mockup screenshot) as base64 data URIs, so a visitor
+    sees exactly what the agent had to open and interpret. Keeps the static site self-contained
+    (no external files). Generic: any task with fixtures/*.png|jpg gets its images shown."""
+    d = resolve_task_dir(task_id)
+    fx = (d / "fixtures") if d else None
+    if not fx or not fx.is_dir():
+        return ""
+    blocks = []
+    for p in sorted(fx.iterdir()):
+        mime = _IMG_MIME.get(p.suffix.lower())
+        if not mime or not p.is_file():
+            continue
+        try:
+            raw = p.read_bytes()
+        except Exception:  # noqa: BLE001
+            continue
+        if len(raw) > 800_000:  # keep the page light
+            continue
+        b64 = base64.b64encode(raw).decode()
+        blocks.append(
+            f'<figure class="attach"><img src="data:{mime};base64,{b64}" alt="{esc(p.name)}"/>'
+            f'<figcaption>{esc(p.name)} — the agent must open and interpret this</figcaption></figure>'
+        )
+    if not blocks:
+        return ""
+    return ('<p class="mcaption muted">The PM also attached this — interpreting it is part of the task:</p>'
+            + "".join(blocks))
 
 
 def _read_result(run_path: str) -> dict[str, Any]:
@@ -645,6 +680,9 @@ SHARED_CSS = """
   .ask .step:last-child { border-bottom:0; }
   .ask .steplabel { font-size:.62rem; text-transform:uppercase; letter-spacing:.08em; color:var(--text-4); font-weight:700; margin-bottom:.5rem; }
   .ask pre { margin:0; white-space:pre-wrap; word-break:break-word; font:.84rem/1.65 var(--mono); color:var(--text-2); }
+  .attach { margin:1rem 0 0; }
+  .attach img { display:block; max-width:100%; border:1px solid var(--border); border-radius:4px; }
+  .attach figcaption { font-size:.72rem; color:var(--text-4); margin-top:.45rem; font-family:var(--sans); }
   .key { background:var(--pass-bg); border:1px solid var(--border-sub); border-left:3px solid var(--up);
     border-radius:0; padding:1rem 1.1rem; }
   .key .klabel { font-size:.62rem; text-transform:uppercase; letter-spacing:.08em; color:var(--up); margin-bottom:.5rem; font-weight:700; }
@@ -1050,6 +1088,7 @@ def _detail_inner(task_id, task_meta, rows_for_task, models) -> str:
   <h2>The goal</h2>
   <p class="mcaption muted">Exactly what the agent was given — no answer key, no hints.</p>
   <div class="ask">{ask_html}</div>
+  {inline_task_images(task_id)}
 
   <h2>The answer key</h2>
   <div class="key">
