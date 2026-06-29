@@ -253,57 +253,41 @@
     <p class="eyebrow"><span class="cat cat-b">B</span>
       <span class="cn">Long Haul</span><span class="muted">· b-01</span></p>
     <h1>Dedup postings by company — the rule must hold across a 6-step merge</h1>
-    <p class="sub">A dedup-by-company rule (normalize case/whitespace, ignore location) stated once must still hold after a second file is merged in at step 4.</p>
+    <p class="sub">A PM asks, casually, how many roles each company actually has open — “same job, listed once per city.” That location-dedup intent is stated once; the case/whitespace half (`Senior PM`/`senior pm`/`DATA PM` are one role) is never spelled out. Does the agent infer it and keep it holding after a second file is merged in?</p>
     <p class="runline">solved by <b>3 of 3</b> models</p>
   </header>
 
   <h2>The goal</h2>
   <p class="mcaption muted">Exactly what the agent was given — no answer key, no hints.</p>
-  <div class="ask"><div class="step"><div class="steplabel">Step 1</div><pre>Load `fixtures/postings.csv`.
+  <div class="ask"><div class="step"><div class="steplabel">Step 1</div><pre>Hey — quick one. We&#x27;ve been scraping job postings into `fixtures/postings.csv`, and I want a read
+on how many roles each company actually has open right now.
 
-Important counting rule — keep it for the rest of our work:
+One thing to watch: our scraper lists the same job separately for every city it&#x27;s hiring in, so a
+single opening can show up five or six times. I don&#x27;t care about the per-city breakdown — I just
+want the real number of distinct openings each company has.
 
-- The same role is often posted in multiple cities. **Treat one role as one opening — dedupe by
-  company + title, NOT by location.**
-- Titles that differ only in **capitalization or extra whitespace** are the same role (e.g.
-  `Senior PM`, `senior pm`, and `Senior  PM` are one title). Normalize before counting.
+Can you pull together a little table — one row per company, with how many openings they&#x27;ve got —
+and drop it in a CSV I can open later? `unique_openings.csv` in this folder is fine. We&#x27;ll keep
+building on this, so try to get it right.</pre></div><div class="step"><div class="steplabel">Step 2</div><pre>Oh, while you&#x27;re in there — can you also tell me where each company is concentrated? Just the one
+city each one posts in most.
 
-Build a small table of unique openings per company. Write it to a file named
-`unique_openings.csv` in the current directory, with exactly these columns:
+A second little file is fine — `company_locations.csv` or whatever&#x27;s easy. Leave the openings
+table as it is.</pre></div><div class="step"><div class="steplabel">Step 3</div><pre>One more number for me: I want a sense of raw volume too — the total count of postings we&#x27;ve
+scraped, every row, before any of the dedup. Stick it in a `metrics.json` as `total_postings`.
 
-    company,unique_openings
+That&#x27;s a separate raw-volume number — the openings table should stay the deduped view, don&#x27;t let
+this change it.</pre></div><div class="step"><div class="steplabel">Step 4</div><pre>The scraper just dropped a second batch in `fixtures/new_postings.csv` — same shape as the first.
+Fold it into the openings table so the per-company numbers cover both files now.
 
-Keep this file accurate for the rest of our work.</pre></div><div class="step"><div class="steplabel">Step 2</div><pre>Now add a column showing each company&#x27;s most common posting location.
+Heads up: a bunch of these are roles we already had, just showing up again in a different city.
+Those shouldn&#x27;t bump anyone&#x27;s count — only genuinely new roles should move the numbers.</pre></div><div class="step"><div class="steplabel">Step 5</div><pre>And bump that `total_postings` number to cover both files now — raw count across everything we&#x27;ve
+scraped, every row in both.
 
-Write a file named `company_locations.csv` with these columns:
+Same as before: that&#x27;s just the raw volume, keep it separate from how the openings table is
+counted.</pre></div><div class="step"><div class="steplabel">Step 6</div><pre>So — bottom line for me: how many distinct openings does Acme Corp have across everything we&#x27;ve
+loaded?
 
-    company,top_location
-
-(Leave `unique_openings.csv` as it is.)</pre></div><div class="step"><div class="steplabel">Step 3</div><pre>Add a &quot;total postings&quot; metric to the dashboard so we can see overall volume.
-
-Write a file named `metrics.json` containing:
-
-    { &quot;total_postings&quot;: &lt;number&gt; }
-
-where `total_postings` is the overall count of raw postings — every row in `postings.csv`.
-
-Make sure the per-company unique openings in `unique_openings.csv` stay correct.</pre></div><div class="step"><div class="steplabel">Step 4</div><pre>Our scraper just pulled a second batch into `fixtures/new_postings.csv` (same columns). Fold it
-into the dashboard.
-
-Update `unique_openings.csv` so the per-company counts reflect unique openings across **both**
-files together — same counting rule as before (dedupe by company + title, ignore location, and
-titles differing only in case or whitespace are the same role).
-
-A role already counted from the first file must **not** be counted again just because it also
-appears in the new batch (possibly in a new city or written with different capitalization). Only
-genuinely new roles increase a company&#x27;s count.</pre></div><div class="step"><div class="steplabel">Step 5</div><pre>Update the `total_postings` metric in `metrics.json` to the overall count of raw postings across
-**both** files (every row in `postings.csv` plus every row in `new_postings.csv`).
-
-As always, keep the per-company unique openings in `unique_openings.csv` correct — `total_postings`
-is a separate raw-volume number and must not change how the unique table is counted.</pre></div><div class="step"><div class="steplabel">Step 6</div><pre>Give me the final count of unique openings for company &quot;Acme Corp&quot; — across everything we&#x27;ve
-loaded.
-
-State the number clearly, and also write your answer to a file named `answer.json` containing:
+Give me the number plainly, and drop it in an `answer.json` so I can wire it up:
 
     { &quot;company&quot;: &quot;Acme Corp&quot;, &quot;unique_openings&quot;: &lt;number&gt; }</pre></div></div>
   
