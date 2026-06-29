@@ -1,11 +1,7 @@
 {
   "version": "0.0.1",
   "configurations": [
-    {
-      "name": "docs-preview",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8742"],
-      "port": 8742
-    }
+    { "name": "leaderboard", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "8731", "--directory", "results"], "port": 8731 },
+    { "name": "site", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "8732", "--directory", "public"], "port": 8732 }
   ]
 }

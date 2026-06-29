@@ -99,7 +99,7 @@ TASK_ABOUT = {
     "a-01": "A vague ask with no schema — does the agent clarify what to track, or silently guess?",
     "a-02": "“Make this faster” with no target — does the agent set a baseline and protect correctness?",
     "a-05": "An underspecified analysis ask — does the agent surface what “changing” means before building?",
-    "b-01": "A dedup-by-company rule (normalize case/whitespace, ignore location) stated once must still hold after a second file is merged in at step 4.",
+    "b-01": "A PM asks, casually, how many roles each company actually has open — “same job, listed once per city.” That location-dedup intent is stated once; the case/whitespace half (`Senior PM`/`senior pm`/`DATA PM` are one role) is never spelled out. Does the agent infer it and keep it holding after a second file is merged in?",
     "b-02": "An integer-cents money convention must survive a six-step pipeline — including a 7% discount with half-up rounding — without losing pennies.",
     "b-03": "A PM asks, casually, for “this month's summary — like the screenshot.” The only place the “exclude internal/test accounts” rule appears is a footnote in the mockup image: does the agent open it, infer the format, and hold the rule as later steps add a metric and a brand-new referrals file?",
     "c-01": "Turn a one-page PRD into a working CRUD API with validation, a status filter, a notes sub-resource, cascade delete, and persistence across a restart.",
@@ -232,6 +232,104 @@ def inline_task_images(task_id: str) -> str:
         return ""
     return ('<p class="mcaption muted">The PM also attached this — interpreting it is part of the task:</p>'
             + "".join(blocks))
+
+
+def _md_inline(text: str) -> str:
+    """Inline markdown -> HTML on already-escaped text. Handles `code` and **bold**."""
+    import re
+
+    text = re.sub(r"`([^`]+)`", r"<code>\1</code>", text)
+    text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
+    text = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", text)
+    return text
+
+
+def _md_to_html(md: str) -> str:
+    """Tiny, dependency-free markdown -> HTML for the doc subset our briefs use:
+    h1-h3, paragraphs, `-` bullet lists, pipe tables, **bold**, and `inline code`.
+    Not a general markdown engine — just enough to render a PM brief faithfully."""
+    lines = md.splitlines()
+    out: list[str] = []
+    i, n = 0, len(lines)
+    while i < n:
+        line = lines[i]
+        stripped = line.strip()
+        if not stripped:
+            i += 1
+            continue
+        # headings
+        if stripped.startswith("#"):
+            level = len(stripped) - len(stripped.lstrip("#"))
+            level = min(max(level, 1), 3)
+            out.append(f"<h{level}>{_md_inline(esc(stripped[level:].strip()))}</h{level}>")
+            i += 1
+            continue
+        # tables: a run of pipe rows, 2nd row is the |---|---| separator
+        if stripped.startswith("|") and i + 1 < n and set(lines[i + 1].strip()) <= set("|-: "):
+            def cells(row: str) -> list[str]:
+                return [c.strip() for c in row.strip().strip("|").split("|")]
+
+            header = cells(stripped)
+            i += 2  # skip header + separator
+            body = []
+            while i < n and lines[i].strip().startswith("|"):
+                body.append(cells(lines[i]))
+                i += 1
+            thead = "".join(f"<th>{_md_inline(esc(c))}</th>" for c in header)
+            trows = "".join(
+                "<tr>" + "".join(f"<td>{_md_inline(esc(c))}</td>" for c in r) + "</tr>"
+                for r in body
+            )
+            out.append(f"<table><thead><tr>{thead}</tr></thead><tbody>{trows}</tbody></table>")
+            continue
+        # unordered list (with wrapped continuation lines folded into their item)
+        if stripped.startswith("- "):
+            items = []
+            while i < n and lines[i].strip().startswith("- "):
+                item = [lines[i].strip()[2:].strip()]
+                i += 1
+                while i < n:
+                    cont = lines[i].strip()
+                    if not cont or cont.startswith(("- ", "#", "|")):
+                        break
+                    item.append(cont)
+                    i += 1
+                items.append(f"<li>{_md_inline(esc(' '.join(item)))}</li>")
+            out.append("<ul>" + "".join(items) + "</ul>")
+            continue
+        # paragraph: gather contiguous non-blank, non-structural lines
+        para = []
+        while i < n and lines[i].strip() and not lines[i].strip().startswith(("#", "-", "|")):
+            para.append(lines[i].strip())
+            i += 1
+        out.append(f"<p>{_md_inline(esc(' '.join(para)))}</p>")
+    return "".join(out)
+
+
+def inline_task_docs(task_id: str) -> str:
+    """Render any markdown document fixtures (e.g. a PM's PRD/brief) as formatted HTML, so a
+    site visitor sees the brief the agent had to read — not just the one-line 'go read PRD.md'
+    wrapper prompt. Generic: any task with fixtures/*.md gets it shown."""
+    d = resolve_task_dir(task_id)
+    fx = (d / "fixtures") if d else None
+    if not fx or not fx.is_dir():
+        return ""
+    blocks = []
+    for p in sorted(fx.iterdir()):
+        if p.suffix.lower() != ".md" or not p.is_file():
+            continue
+        try:
+            md = p.read_text()
+        except Exception:  # noqa: BLE001
+            continue
+        blocks.append(
+            f'<figure class="doc"><figcaption>{esc(p.name)} — the brief the agent had to read</figcaption>'
+            f'<div class="docbody">{_md_to_html(md)}</div></figure>'
+        )
+    if not blocks:
+        return ""
+    return ('<p class="mcaption muted">The agent doesn\'t get a spec — it gets this brief and '
+            'has to turn it into a working build:</p>' + "".join(blocks))
 
 
 def _read_result(run_path: str) -> dict[str, Any]:
@@ -683,6 +781,20 @@ SHARED_CSS = """
   .attach { margin:1rem 0 0; }
   .attach img { display:block; max-width:100%; border:1px solid var(--border); border-radius:4px; }
   .attach figcaption { font-size:.72rem; color:var(--text-4); margin-top:.45rem; font-family:var(--sans); }
+  .doc { margin:1rem 0 0; }
+  .doc figcaption { font-size:.72rem; color:var(--text-4); margin:0 0 .5rem; font-family:var(--sans); }
+  .docbody { border:1px solid var(--border); border-radius:4px; padding:1.1rem 1.3rem; background:var(--bg-raised);
+    font-family:var(--sans); font-size:.86rem; line-height:1.6; color:var(--text-2); }
+  .docbody h1 { font-size:1.05rem; margin:0 0 .6rem; color:var(--text-1); }
+  .docbody h2 { font-size:.92rem; margin:1.2rem 0 .5rem; color:var(--text-1); }
+  .docbody h3 { font-size:.82rem; margin:1rem 0 .4rem; color:var(--text-1); }
+  .docbody p { margin:.5rem 0; }
+  .docbody ul { margin:.5rem 0; padding-left:1.2rem; }
+  .docbody li { margin:.25rem 0; }
+  .docbody code { font-family:var(--mono); font-size:.8rem; background:var(--pass-bg); padding:.05rem .3rem; border-radius:3px; }
+  .docbody table { border-collapse:collapse; margin:.6rem 0; width:100%; font-size:.8rem; }
+  .docbody th, .docbody td { border:1px solid var(--border); padding:.35rem .6rem; text-align:left; vertical-align:top; }
+  .docbody th { background:var(--pass-bg); font-weight:600; color:var(--text-1); }
   .key { background:var(--pass-bg); border:1px solid var(--border-sub); border-left:3px solid var(--up);
     border-radius:0; padding:1rem 1.1rem; }
   .key .klabel { font-size:.62rem; text-transform:uppercase; letter-spacing:.08em; color:var(--up); margin-bottom:.5rem; font-weight:700; }
@@ -1088,6 +1200,7 @@ def _detail_inner(task_id, task_meta, rows_for_task, models) -> str:
   <h2>The goal</h2>
   <p class="mcaption muted">Exactly what the agent was given — no answer key, no hints.</p>
   <div class="ask">{ask_html}</div>
+  {inline_task_docs(task_id)}
   {inline_task_images(task_id)}
 
   <h2>The answer key</h2>
