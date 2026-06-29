@@ -1,9 +1,5 @@
-Add a "total postings" metric to the dashboard so we can see overall volume.
+One more number for me: I want a sense of raw volume too — the total count of postings we've
+scraped, every row, before any of the dedup. Stick it in a `metrics.json` as `total_postings`.
 
-Write a file named `metrics.json` containing:
-
-    { "total_postings": <number> }
-
-where `total_postings` is the overall count of raw postings (every row in the source data).
-
-Make sure the per-company unique openings in `unique_openings.csv` stay correct.
+That's a separate raw-volume number — the openings table should stay the deduped view, don't let
+this change it.

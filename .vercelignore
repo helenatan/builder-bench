@@ -1,0 +1,13 @@
+# Keep the deploy lean: only what the leaderboard build needs (harness/, tasks/,
+# results/leaderboard.json) plus the prebuilt public/. Exclude heavy run artifacts,
+# the held-out split, and local cruft.
+results/runs/
+private/
+__pycache__/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+node_modules/
+.DS_Store
