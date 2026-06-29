@@ -185,6 +185,20 @@
   .attach { margin:1rem 0 0; }
   .attach img { display:block; max-width:100%; border:1px solid var(--border); border-radius:4px; }
   .attach figcaption { font-size:.72rem; color:var(--text-4); margin-top:.45rem; font-family:var(--sans); }
+  .doc { margin:1rem 0 0; }
+  .doc figcaption { font-size:.72rem; color:var(--text-4); margin:0 0 .5rem; font-family:var(--sans); }
+  .docbody { border:1px solid var(--border); border-radius:4px; padding:1.1rem 1.3rem; background:var(--bg-raised);
+    font-family:var(--sans); font-size:.86rem; line-height:1.6; color:var(--text-2); }
+  .docbody h1 { font-size:1.05rem; margin:0 0 .6rem; color:var(--text-1); }
+  .docbody h2 { font-size:.92rem; margin:1.2rem 0 .5rem; color:var(--text-1); }
+  .docbody h3 { font-size:.82rem; margin:1rem 0 .4rem; color:var(--text-1); }
+  .docbody p { margin:.5rem 0; }
+  .docbody ul { margin:.5rem 0; padding-left:1.2rem; }
+  .docbody li { margin:.25rem 0; }
+  .docbody code { font-family:var(--mono); font-size:.8rem; background:var(--pass-bg); padding:.05rem .3rem; border-radius:3px; }
+  .docbody table { border-collapse:collapse; margin:.6rem 0; width:100%; font-size:.8rem; }
+  .docbody th, .docbody td { border:1px solid var(--border); padding:.35rem .6rem; text-align:left; vertical-align:top; }
+  .docbody th { background:var(--pass-bg); font-weight:600; color:var(--text-1); }
   .key { background:var(--pass-bg); border:1px solid var(--border-sub); border-left:3px solid var(--up);
     border-radius:0; padding:1rem 1.1rem; }
   .key .klabel { font-size:.62rem; text-transform:uppercase; letter-spacing:.08em; color:var(--up); margin-bottom:.5rem; font-weight:700; }
@@ -259,28 +273,18 @@
 
   <h2>The goal</h2>
   <p class="mcaption muted">Exactly what the agent was given — no answer key, no hints.</p>
-  <div class="ask"><div class="step"><div class="steplabel">Prompt</div><pre>`fixtures/raw_sales.csv` is a messy sales export. Turn it into a clean dataset and a short
-summary report.
+  <div class="ask"><div class="step"><div class="steplabel">Prompt</div><pre>Hey — finance needs a cleaned-up version of our sales export, plus the monthly summary numbers
+for the quarterly review. The raw export is at `fixtures/raw_sales.csv` and it&#x27;s pretty messy:
+stray spaces, dollar signs, a few junk rows, and some refunds mixed in.
 
-Apply exactly these cleaning rules:
+I wrote down exactly how finance wants the data handled in `fixtures/cleanup_notes.md` — please
+follow that to the letter, since these numbers go straight into the review.
 
-1. **Trim** leading/trailing whitespace from every field.
-2. **Amount:** strip the `$` and any thousands commas, and store it as a number with 2 decimal
-   places (e.g. `&quot;$1,234.56&quot;` → `1234.56`). Amounts can be **negative** (refunds/adjustments),
-   written either with a leading minus (`-$25.00` → `-25.00`) or in accounting style with
-   parentheses (`($50.00)` → `-50.00`).
-3. **Category:** lowercase it.
-4. **Date:** convert to ISO `YYYY-MM-DD`. Inputs appear in four forms: `MM/DD/YYYY`,
-   `YYYY-MM-DD`, `Month D, YYYY` (e.g. `March 7, 2026`), and `D-Mon-YYYY` (e.g. `7-Mar-2026`).
-5. **Drop** any row missing a `date`, `amount`, or `category`.
-6. **De-duplicate:** after cleaning, if two rows are identical in all three of `date`,
-   `category`, and `amount`, keep only one.
+Two things I need back, both in this folder:
 
-Write two files in the current directory:
-
-- `clean_sales.csv` with columns `date,category,amount`, sorted by `date` ascending (then by
-  `category` ascending).
-- `report.json`:
+- `clean_sales.csv` — the cleaned data, columns `date,category,amount`, sorted by `date`
+  ascending (then by `category` ascending).
+- `report.json` — the summary, shaped like:
   ```json
   {
     &quot;row_count&quot;: &lt;int&gt;,
@@ -290,7 +294,12 @@ Write two files in the current directory:
   }
   ```
   where `total_amount`, each `by_category`, and each `by_month` value are sums of the cleaned
-  amounts. The report must be consistent with `clean_sales.csv`.</pre></div></div>
+  amounts.
+
+The one thing that really matters: the summary has to actually reconcile with the clean file.
+Last quarter the totals in the report didn&#x27;t match the data underneath them and it was
+embarrassing in the review — so please double-check the numbers line up before you call it done.</pre></div></div>
+  <p class="mcaption muted">The agent doesn't get a spec — it gets this brief and has to turn it into a working build:</p><figure class="doc"><figcaption>cleanup_notes.md — the brief the agent had to read</figcaption><div class="docbody"><h1>How finance wants the sales data cleaned</h1><p>These are the rules we apply every quarter so the numbers reconcile across teams. Please apply all of them, exactly as written.</p><p><strong>Every field:</strong> strip leading and trailing whitespace.</p><p><strong>Amount</strong></p><ul><li>Drop the <code>$</code> and any thousands commas — e.g. <code>&quot;$1,234.56&quot;</code> → <code>1234.56</code>. Store it as a number with 2 decimal places.</li><li>Some amounts are negative (refunds and adjustments). They show up two ways, and both mean a negative number:</li><li>a leading minus, e.g. <code>-$25.00</code> → <code>-25.00</code></li><li>accounting style in parentheses, e.g. <code>($50.00)</code> → <code>-50.00</code></li></ul><p><strong>Category:</strong> lowercase it, so <code>Home</code>, <code>home</code>, and <code>HOME</code> all roll up together.</p><p><strong>Date:</strong> convert everything to ISO <code>YYYY-MM-DD</code>. The export mixes four formats:</p><ul><li><code>MM/DD/YYYY</code></li><li><code>YYYY-MM-DD</code></li><li><code>Month D, YYYY</code> (e.g. <code>March 7, 2026</code>)</li><li><code>D-Mon-YYYY</code> (e.g. <code>7-Mar-2026</code>)</li></ul><p><strong>Drop the junk rows:</strong> if a row is missing its date, amount, or category, leave it out entirely — don&#x27;t try to guess the missing value.</p><p><strong>De-duplicate:</strong> after the cleaning above, if two rows end up identical in <code>date</code>, <code>category</code>, and <code>amount</code>, keep only one. (The export system occasionally writes the same sale twice.)</p></div></figure>
   
 
   <h2>The answer key</h2>

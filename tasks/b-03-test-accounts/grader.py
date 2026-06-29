@@ -74,12 +74,38 @@ def _nums(s: str) -> list[float]:
     return out
 
 
+# A PM-style summary mirrors the screenshot's "Metric | Value" table, so agents very often emit a
+# list of records — [{"name": "Active users", "value": 7}, ...] — where the metric name lives in a
+# sibling field, not the JSON key path. Flattening by key path alone collapses every row to
+# ("metrics value", N) and loses the name. So we ALSO detect the record pattern and pair the
+# name-ish field with the value-ish field.
+_NAME_KEYS = ("name", "metric", "metric_name", "label", "key", "dimension", "kpi")
+_VALUE_KEYS = ("value", "val", "amount", "count", "number", "result", "figure", "total", "metric_value")
+
+
+def _coerce_num(x) -> float | None:
+    if isinstance(x, bool):
+        return None
+    if isinstance(x, (int, float)):
+        return float(x)
+    if isinstance(x, str):
+        ns = _nums(x)
+        return ns[0] if len(ns) == 1 else None  # a value field should hold a single number
+    return None
+
+
 def _flatten_json(obj, prefix: str, pairs: list[tuple[str, float]]) -> None:
     if isinstance(obj, bool):
         return
     if isinstance(obj, (int, float)):
         pairs.append((prefix.strip().lower().replace("_", " "), float(obj)))
     elif isinstance(obj, dict):
+        # record pattern: {name-ish: "Active users", value-ish: 7} -> ("active users", 7)
+        label = next((obj[k] for k in _NAME_KEYS if isinstance(obj.get(k), str)), None)
+        if label:
+            v = next((_coerce_num(obj[k]) for k in _VALUE_KEYS if _coerce_num(obj.get(k)) is not None), None)
+            if v is not None:
+                pairs.append((label.strip().lower(), v))
         for k, v in obj.items():
             _flatten_json(v, f"{prefix} {k}", pairs)
     elif isinstance(obj, list):

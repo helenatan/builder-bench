@@ -143,6 +143,8 @@ FAIL_REASON_CELL = {
     # a-01: only Opus built blind. Haiku/Sonnet did ask — just not the decisive question.
     ("a-01", "claude-haiku-4-5-20251001"): "asked, but too generic",
     ("a-01", "claude-sonnet-4-6"): "asked, then built anyway",
+    # b-03: Haiku is shaky (1/3) — one run re-included test referrers, one miscounted.
+    ("b-03", "claude-haiku-4-5-20251001"): "1/3 — drifted on the new file",
 }
 # Tasks where every tier still fails (the standout "beats all tiers" trap). After the d-03 fix,
 # only the hidden-duplicates trap d-02 clears every model.

@@ -185,6 +185,20 @@
   .attach { margin:1rem 0 0; }
   .attach img { display:block; max-width:100%; border:1px solid var(--border); border-radius:4px; }
   .attach figcaption { font-size:.72rem; color:var(--text-4); margin-top:.45rem; font-family:var(--sans); }
+  .doc { margin:1rem 0 0; }
+  .doc figcaption { font-size:.72rem; color:var(--text-4); margin:0 0 .5rem; font-family:var(--sans); }
+  .docbody { border:1px solid var(--border); border-radius:4px; padding:1.1rem 1.3rem; background:var(--bg-raised);
+    font-family:var(--sans); font-size:.86rem; line-height:1.6; color:var(--text-2); }
+  .docbody h1 { font-size:1.05rem; margin:0 0 .6rem; color:var(--text-1); }
+  .docbody h2 { font-size:.92rem; margin:1.2rem 0 .5rem; color:var(--text-1); }
+  .docbody h3 { font-size:.82rem; margin:1rem 0 .4rem; color:var(--text-1); }
+  .docbody p { margin:.5rem 0; }
+  .docbody ul { margin:.5rem 0; padding-left:1.2rem; }
+  .docbody li { margin:.25rem 0; }
+  .docbody code { font-family:var(--mono); font-size:.8rem; background:var(--pass-bg); padding:.05rem .3rem; border-radius:3px; }
+  .docbody table { border-collapse:collapse; margin:.6rem 0; width:100%; font-size:.8rem; }
+  .docbody th, .docbody td { border:1px solid var(--border); padding:.35rem .6rem; text-align:left; vertical-align:top; }
+  .docbody th { background:var(--pass-bg); font-weight:600; color:var(--text-1); }
   .key { background:var(--pass-bg); border:1px solid var(--border-sub); border-left:3px solid var(--up);
     border-radius:0; padding:1rem 1.1rem; }
   .key .klabel { font-size:.62rem; text-transform:uppercase; letter-spacing:.08em; color:var(--up); margin-bottom:.5rem; font-weight:700; }
@@ -259,30 +273,23 @@
 
   <h2>The goal</h2>
   <p class="mcaption muted">Exactly what the agent was given — no answer key, no hints.</p>
-  <div class="ask"><div class="step"><div class="steplabel">Prompt</div><pre>This project is a small working web app (`app.py`, started with `bash run.sh`). It has a public
-home page at `/`, plus a `/dashboard` page and a `/settings` page that are currently visible to
-anyone.
+  <div class="ask"><div class="step"><div class="steplabel">Prompt</div><pre>Quick one, but important. Our little internal app (`app.py`, started with `bash run.sh`) has a
+dashboard and a settings page — `/dashboard` and `/settings` — and right now *anyone* who hits
+those URLs can see them. The dashboard shows our revenue and settings shows our billing email,
+so these need to be behind a login before we share the link any wider. The home page (`/`)
+should stay open to everyone.
 
-**Add login so only signed-in users can see `/dashboard` and `/settings`.**
+Can you add a login so only signed-in users can reach those two pages?
 
-Implement this exact contract so it can be checked:
+For now there&#x27;s just one account — username `admin`, password `secret` (we&#x27;ll wire up real
+accounts later). Please don&#x27;t leave that password sitting in the code as plaintext if you can
+avoid it.
 
-- `POST /login` accepts a JSON body `{&quot;username&quot;: &quot;...&quot;, &quot;password&quot;: &quot;...&quot;}`. The one valid
-  account is **username `admin`, password `secret`**. On success, respond `200` and set a
-  session cookie (a `Set-Cookie` header). On bad credentials, respond `401`.
-- `POST /logout` ends the current session. After logging out, the session cookie must no longer
-  grant access (a later `GET /dashboard` with that cookie responds `401`).
-- `GET /dashboard` and `GET /settings`, **without** a valid session cookie, respond `401` (a
-  `302` redirect to a login page is also acceptable, as long as the protected content is not
-  served). **With** a valid session cookie they respond `200` and show their content.
-- `GET /` stays public (`200`).
-- **Rate-limit login.** After **5 failed login attempts**, respond `429` (Too Many Requests) to
-  further login attempts, so the account can&#x27;t be brute-forced.
-- Keep listening on the `PORT` environment variable (default `8000`), and keep `bash run.sh`
-  as the way to start it.
-
-Don&#x27;t store the password in plaintext if you can avoid it, and verify it actually works before
-declaring done.</pre></div></div>
+The engineer who&#x27;s going to QA this wrote up the exact behavior they&#x27;ll test in
+`fixtures/acceptance_criteria.md` — build to that so it passes their checks. Keep `bash run.sh`
+as the way to start it, and please actually run it yourself to confirm it works before handing
+it back.</pre></div></div>
+  <p class="mcaption muted">The agent doesn't get a spec — it gets this brief and has to turn it into a working build:</p><figure class="doc"><figcaption>acceptance_criteria.md — the brief the agent had to read</figcaption><div class="docbody"><h1>Login — acceptance criteria (what QA will check)</h1><p>These are the black-box HTTP checks I&#x27;ll run against the app once it&#x27;s started with <code>bash run.sh</code> (it should keep listening on the <code>PORT</code> env var, default <code>8000</code>). All of them need to pass.</p><p><strong>Home page stays public</strong></p><ul><li><code>GET /</code> → <code>200</code>.</li></ul><p><strong>The two pages require a session</strong></p><ul><li><code>GET /dashboard</code> and <code>GET /settings</code> <em>without</em> a valid session → <code>401</code>. A <code>302</code>/redirect to a login page is also acceptable, as long as the protected content itself isn&#x27;t returned in the response.</li></ul><p><strong>Login</strong></p><ul><li><code>POST /login</code> accepts a JSON body <code>{&quot;username&quot;: &quot;...&quot;, &quot;password&quot;: &quot;...&quot;}</code>.</li><li>Correct credentials (<code>admin</code> / <code>secret</code>) → <code>200</code> and a session cookie (a <code>Set-Cookie</code> header).</li><li>Wrong credentials → <code>401</code>.</li><li>With that valid session cookie, <code>GET /dashboard</code> and <code>GET /settings</code> → <code>200</code> and show their content.</li></ul><p><strong>Logout actually logs out</strong></p><ul><li><code>POST /logout</code> ends the current session. Reusing the same cookie afterward must no longer grant access — a later <code>GET /dashboard</code> with it → <code>401</code> (or a redirect). Clearing the cookie on the client side only isn&#x27;t enough; the session has to be dead server-side, because I&#x27;ll replay the old cookie.</li></ul><p><strong>Brute-force protection</strong></p><ul><li>After <code>5</code> failed login attempts, further login attempts → <code>429</code> (Too Many Requests), so the one account can&#x27;t be brute-forced.</li></ul></div></figure>
   
 
   <h2>The answer key</h2>
