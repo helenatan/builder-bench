@@ -1,0 +1,222 @@
+[rerun-b] start Sun Jun 28 21:29:51 PDT 2026 tasks=b-02 b-03
+
+=== [1/6] b-02 / haiku ===
+[builder-bench] no credential env var set; the child `claude` will use your stored login (subscription) if present. If you have not run `claude setup-token` / `claude login`, the agent will 401.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
+[builder-bench] sanitized host-brokering env vars: ['AI_AGENT', 'CLAUDECODE', 'CLAUDE_AGENT_SDK_VERSION', 'CLAUDE_CODE_DISABLE_CRON', 'CLAUDE_CODE_EMIT_TOOL_USE_SUMMARIES', 'CLAUDE_CODE_ENABLE_ASK_USER_QUESTION_TOOL', 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDE_CODE_EXECPATH', 'CLAUDE_CODE_SDK_HAS_HOST_AUTH_REFRESH', 'CLAUDE_CODE_SDK_HAS_OAUTH_REFRESH', 'CLAUDE_CODE_SESSION_ID', 'CLAUDE_EFFORT']
+[builder-bench] task=b-02 (cat B) model=haiku attempts=3
+
+--- attempt 1/3 ---
+  [sandbox:local] workdir = /var/folders/qc/j03z8l854dx1ztjlvyzv0g_c0000gp/T/bb-bench-e6_2748t/workdir
+  [model] haiku -> claude-haiku-4-5-20251001; running 6 step(s)...
+  [grade] FAIL score=0.50 cost=$0.1282 tags=['vision-drift', 'silent-assumptions']
+
+--- attempt 2/3 ---
+  [sandbox:local] workdir = /var/folders/qc/j03z8l854dx1ztjlvyzv0g_c0000gp/T/bb-bench-jwr3t4gs/workdir
+  [model] haiku -> claude-haiku-4-5-20251001; running 6 step(s)...
+  [grade] FAIL score=0.00 cost=$0.1117 tags=['weak-self-verification', 'no-answer']
+
+--- attempt 3/3 ---
+  [sandbox:local] workdir = /var/folders/qc/j03z8l854dx1ztjlvyzv0g_c0000gp/T/bb-bench-09qtftb5/workdir
+  [model] haiku -> claude-haiku-4-5-20251001; running 6 step(s)...
+  [grade] FAIL score=0.00 cost=$0.1258 tags=['weak-self-verification', 'no-answer']
+
+[builder-bench] ===== summary =====
+{
+  "attempts": 3,
+  "solved": 0,
+  "pass@1": 0.0,
+  "pass@3": 0.0,
+  "mean_score": 0.1667,
+  "best_score": 0.5,
+  "total_cost_usd": 0.365779,
+  "cost_per_solved_usd": null,
+  "cost_per_task_usd": 0.121926,
+  "input_tokens": 336,
+  "output_tokens": 29505,
+  "num_turns": 9,
+  "tool_calls": 44
+}
+[builder-bench] artifacts: /Users/Helena/Developer/builder-bench/results/runs/b-02/haiku/20260628-212951
+[builder-bench] leaderboard row appended -> results/leaderboard.json
+[rerun-b] b-02/haiku rc=1   [grade] FAIL score=0.00 cost=$0.1258 tags=['weak-self-verification', 'no-answer']
+
+=== [2/6] b-02 / sonnet ===
+[builder-bench] no credential env var set; the child `claude` will use your stored login (subscription) if present. If you have not run `claude setup-token` / `claude login`, the agent will 401.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
+[builder-bench] sanitized host-brokering env vars: ['AI_AGENT', 'CLAUDECODE', 'CLAUDE_AGENT_SDK_VERSION', 'CLAUDE_CODE_DISABLE_CRON', 'CLAUDE_CODE_EMIT_TOOL_USE_SUMMARIES', 'CLAUDE_CODE_ENABLE_ASK_USER_QUESTION_TOOL', 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDE_CODE_EXECPATH', 'CLAUDE_CODE_SDK_HAS_HOST_AUTH_REFRESH', 'CLAUDE_CODE_SDK_HAS_OAUTH_REFRESH', 'CLAUDE_CODE_SESSION_ID', 'CLAUDE_EFFORT']
+[builder-bench] task=b-02 (cat B) model=sonnet attempts=3
+
+--- attempt 1/3 ---
+  [sandbox:local] workdir = /var/folders/qc/j03z8l854dx1ztjlvyzv0g_c0000gp/T/bb-bench-p51nyhn7/workdir
+  [model] sonnet -> claude-sonnet-4-6; running 6 step(s)...
+  [grade] PASS score=1.00 cost=$0.5039 tags=[]
+
+--- attempt 2/3 ---
+  [sandbox:local] workdir = /var/folders/qc/j03z8l854dx1ztjlvyzv0g_c0000gp/T/bb-bench-nt6260n7/workdir
+  [model] sonnet -> claude-sonnet-4-6; running 6 step(s)...
+  [grade] PASS score=1.00 cost=$0.3060 tags=[]
+
+--- attempt 3/3 ---
+  [sandbox:local] workdir = /var/folders/qc/j03z8l854dx1ztjlvyzv0g_c0000gp/T/bb-bench-b4zbt813/workdir
+  [model] sonnet -> claude-sonnet-4-6; running 6 step(s)...
+  [grade] PASS score=1.00 cost=$0.3732 tags=[]
+
+[builder-bench] ===== summary =====
+{
+  "attempts": 3,
+  "solved": 3,
+  "pass@1": 1.0,
+  "pass@3": 1.0,
+  "mean_score": 1.0,
+  "best_score": 1.0,
+  "total_cost_usd": 1.183104,
+  "cost_per_solved_usd": 0.394368,
+  "cost_per_task_usd": 0.394368,
+  "input_tokens": 75,
+  "output_tokens": 35166,
+  "num_turns": 8,
+  "tool_calls": 39
+}
+[builder-bench] artifacts: /Users/Helena/Developer/builder-bench/results/runs/b-02/sonnet/20260628-213514
+[builder-bench] leaderboard row appended -> results/leaderboard.json
+[rerun-b] b-02/sonnet rc=0   [grade] PASS score=1.00 cost=$0.3732 tags=[]
+
+=== [3/6] b-02 / opus ===
+[builder-bench] no credential env var set; the child `claude` will use your stored login (subscription) if present. If you have not run `claude setup-token` / `claude login`, the agent will 401.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
+[builder-bench] sanitized host-brokering env vars: ['AI_AGENT', 'CLAUDECODE', 'CLAUDE_AGENT_SDK_VERSION', 'CLAUDE_CODE_DISABLE_CRON', 'CLAUDE_CODE_EMIT_TOOL_USE_SUMMARIES', 'CLAUDE_CODE_ENABLE_ASK_USER_QUESTION_TOOL', 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDE_CODE_EXECPATH', 'CLAUDE_CODE_SDK_HAS_HOST_AUTH_REFRESH', 'CLAUDE_CODE_SDK_HAS_OAUTH_REFRESH', 'CLAUDE_CODE_SESSION_ID', 'CLAUDE_EFFORT']
+[builder-bench] task=b-02 (cat B) model=opus attempts=3
+
+--- attempt 1/3 ---
+  [sandbox:local] workdir = /var/folders/qc/j03z8l854dx1ztjlvyzv0g_c0000gp/T/bb-bench-gpckm5_q/workdir
+  [model] opus -> claude-opus-4-8; running 6 step(s)...
+  [grade] PASS score=1.00 cost=$0.3995 tags=[]
+
+--- attempt 2/3 ---
+  [sandbox:local] workdir = /var/folders/qc/j03z8l854dx1ztjlvyzv0g_c0000gp/T/bb-bench-pl414gir/workdir
+  [model] opus -> claude-opus-4-8; running 6 step(s)...
+  [grade] PASS score=1.00 cost=$0.4276 tags=[]
+
+--- attempt 3/3 ---
+  [sandbox:local] workdir = /var/folders/qc/j03z8l854dx1ztjlvyzv0g_c0000gp/T/bb-bench-721ee_yv/workdir
+  [model] opus -> claude-opus-4-8; running 6 step(s)...
+  [grade] PASS score=1.00 cost=$0.3931 tags=[]
+
+[builder-bench] ===== summary =====
+{
+  "attempts": 3,
+  "solved": 3,
+  "pass@1": 1.0,
+  "pass@3": 1.0,
+  "mean_score": 1.0,
+  "best_score": 1.0,
+  "total_cost_usd": 1.2202,
+  "cost_per_solved_usd": 0.406733,
+  "cost_per_task_usd": 0.406733,
+  "input_tokens": 12648,
+  "output_tokens": 17915,
+  "num_turns": 6,
+  "tool_calls": 21
+}
+[builder-bench] artifacts: /Users/Helena/Developer/builder-bench/results/runs/b-02/opus/20260628-214359
+[builder-bench] leaderboard row appended -> results/leaderboard.json
+[rerun-b] b-02/opus rc=0   [grade] PASS score=1.00 cost=$0.3931 tags=[]
+
+=== [4/6] b-03 / haiku ===
+[builder-bench] no credential env var set; the child `claude` will use your stored login (subscription) if present. If you have not run `claude setup-token` / `claude login`, the agent will 401.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
+[builder-bench] sanitized host-brokering env vars: ['AI_AGENT', 'CLAUDECODE', 'CLAUDE_AGENT_SDK_VERSION', 'CLAUDE_CODE_DISABLE_CRON', 'CLAUDE_CODE_EMIT_TOOL_USE_SUMMARIES', 'CLAUDE_CODE_ENABLE_ASK_USER_QUESTION_TOOL', 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDE_CODE_EXECPATH', 'CLAUDE_CODE_SDK_HAS_HOST_AUTH_REFRESH', 'CLAUDE_CODE_SDK_HAS_OAUTH_REFRESH', 'CLAUDE_CODE_SESSION_ID', 'CLAUDE_EFFORT']
+[builder-bench] task=b-03 (cat B) model=haiku attempts=3
+
+--- attempt 1/3 ---
+  [sandbox:local] workdir = /var/folders/qc/j03z8l854dx1ztjlvyzv0g_c0000gp/T/bb-bench-zwzc_vhn/workdir
+  [model] haiku -> claude-haiku-4-5-20251001; running 3 step(s)...
+  [grade] FAIL score=0.00 cost=$0.0794 tags=['data-blindness']
+
+--- attempt 2/3 ---
+  [sandbox:local] workdir = /var/folders/qc/j03z8l854dx1ztjlvyzv0g_c0000gp/T/bb-bench-88ohyo1_/workdir
+  [model] haiku -> claude-haiku-4-5-20251001; running 3 step(s)...
+  [grade] FAIL score=0.20 cost=$0.0657 tags=[]
+
+--- attempt 3/3 ---
+  [sandbox:local] workdir = /var/folders/qc/j03z8l854dx1ztjlvyzv0g_c0000gp/T/bb-bench-hwaj4l81/workdir
+  [model] haiku -> claude-haiku-4-5-20251001; running 3 step(s)...
+  [grade] FAIL score=0.20 cost=$0.0747 tags=[]
+
+[builder-bench] ===== summary =====
+{
+  "attempts": 3,
+  "solved": 0,
+  "pass@1": 0.0,
+  "pass@3": 0.0,
+  "mean_score": 0.1333,
+  "best_score": 0.2,
+  "total_cost_usd": 0.219679,
+  "cost_per_solved_usd": null,
+  "cost_per_task_usd": 0.073226,
+  "input_tokens": 241,
+  "output_tokens": 18776,
+  "num_turns": 11,
+  "tool_calls": 36
+}
+[builder-bench] artifacts: /Users/Helena/Developer/builder-bench/results/runs/b-03/haiku/20260628-214843
+[builder-bench] leaderboard row appended -> results/leaderboard.json
+[rerun-b] b-03/haiku rc=1   [grade] FAIL score=0.20 cost=$0.0747 tags=[]
+
+=== [5/6] b-03 / sonnet ===
+[builder-bench] no credential env var set; the child `claude` will use your stored login (subscription) if present. If you have not run `claude setup-token` / `claude login`, the agent will 401.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
+[builder-bench] sanitized host-brokering env vars: ['AI_AGENT', 'CLAUDECODE', 'CLAUDE_AGENT_SDK_VERSION', 'CLAUDE_CODE_DISABLE_CRON', 'CLAUDE_CODE_EMIT_TOOL_USE_SUMMARIES', 'CLAUDE_CODE_ENABLE_ASK_USER_QUESTION_TOOL', 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDE_CODE_EXECPATH', 'CLAUDE_CODE_SDK_HAS_HOST_AUTH_REFRESH', 'CLAUDE_CODE_SDK_HAS_OAUTH_REFRESH', 'CLAUDE_CODE_SESSION_ID', 'CLAUDE_EFFORT']
+[builder-bench] task=b-03 (cat B) model=sonnet attempts=3
+
+--- attempt 1/3 ---
+  [sandbox:local] workdir = /var/folders/qc/j03z8l854dx1ztjlvyzv0g_c0000gp/T/bb-bench-fg9fbb88/workdir
+  [model] sonnet -> claude-sonnet-4-6; running 3 step(s)...
+  [grade] FAIL score=0.80 cost=$0.1782 tags=[]
+
+--- attempt 2/3 ---
+  [sandbox:local] workdir = /var/folders/qc/j03z8l854dx1ztjlvyzv0g_c0000gp/T/bb-bench-xd9dyc19/workdir
+  [model] sonnet -> claude-sonnet-4-6; running 3 step(s)...
+  [grade] FAIL score=0.20 cost=$0.1590 tags=[]
+
+--- attempt 3/3 ---
+  [sandbox:local] workdir = /var/folders/qc/j03z8l854dx1ztjlvyzv0g_c0000gp/T/bb-bench-lg2tqgb7/workdir
+  [model] sonnet -> claude-sonnet-4-6; running 3 step(s)...
+  [grade] PASS score=1.00 cost=$0.1885 tags=[]
+
+[builder-bench] ===== summary =====
+{
+  "attempts": 3,
+  "solved": 1,
+  "pass@1": 0.3333,
+  "pass@3": 1.0,
+  "mean_score": 0.6667,
+  "best_score": 1.0,
+  "total_cost_usd": 0.52563,
+  "cost_per_solved_usd": 0.52563,
+  "cost_per_task_usd": 0.17521,
+  "input_tokens": 35,
+  "output_tokens": 16054,
+  "num_turns": 6,
+  "tool_calls": 29
+}
+[builder-bench] artifacts: /Users/Helena/Developer/builder-bench/results/runs/b-03/sonnet/20260628-215222
+[builder-bench] leaderboard row appended -> results/leaderboard.json
+[rerun-b] b-03/sonnet rc=0   [grade] PASS score=1.00 cost=$0.1885 tags=[]
+
+=== [6/6] b-03 / opus ===
+[builder-bench] no credential env var set; the child `claude` will use your stored login (subscription) if present. If you have not run `claude setup-token` / `claude login`, the agent will 401.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
+  [sandbox] WARNING: running LocalSandbox (no Docker). This is NOT an isolation boundary — the agent's Bash runs on the host, confined only to a temp workdir.
