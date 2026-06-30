@@ -206,36 +206,6 @@ _IMG_MIME = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
              ".gif": "image/gif", ".webp": "image/webp"}
 
 
-def inline_task_images(task_id: str) -> str:
-    """Inline any image fixtures (e.g. a PM mockup screenshot) as base64 data URIs, so a visitor
-    sees exactly what the agent had to open and interpret. Keeps the static site self-contained
-    (no external files). Generic: any task with fixtures/*.png|jpg gets its images shown."""
-    d = resolve_task_dir(task_id)
-    fx = (d / "fixtures") if d else None
-    if not fx or not fx.is_dir():
-        return ""
-    blocks = []
-    for p in sorted(fx.iterdir()):
-        mime = _IMG_MIME.get(p.suffix.lower())
-        if not mime or not p.is_file():
-            continue
-        try:
-            raw = p.read_bytes()
-        except Exception:  # noqa: BLE001
-            continue
-        if len(raw) > 800_000:  # keep the page light
-            continue
-        b64 = base64.b64encode(raw).decode()
-        blocks.append(
-            f'<figure class="attach"><img src="data:{mime};base64,{b64}" alt="{esc(p.name)}"/>'
-            f'<figcaption>{esc(p.name)} — the agent must open and interpret this</figcaption></figure>'
-        )
-    if not blocks:
-        return ""
-    return ('<p class="mcaption muted">The PM also attached this — interpreting it is part of the task:</p>'
-            + "".join(blocks))
-
-
 def _md_inline(text: str) -> str:
     """Inline markdown -> HTML on already-escaped text. Handles `code` and **bold**."""
     import re
@@ -323,31 +293,74 @@ def _doc_label(filename: str) -> str:
     return "a document the agent had to work from"
 
 
-def inline_task_docs(task_id: str) -> str:
-    """Render any markdown document fixtures (a PRD, a finance note, QA acceptance criteria) as
-    formatted HTML, so a site visitor sees the *input* the agent was handed — not just the
-    one-line 'go read fixtures/...' wrapper prompt. These are task inputs the agent reads, not
-    the agent's output. Generic: any task with fixtures/*.md gets it shown."""
+_CODE_EXT = {".csv", ".tsv", ".py", ".sh", ".json", ".yaml", ".yml", ".js", ".ts", ".sql", ".txt"}
+
+
+def _file_label(filename: str) -> str:
+    """Short label for a non-doc input fixture, so the reader knows what kind of input it is."""
+    suf = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    if suf in {"py", "js", "ts", "sh", "rb", "go"}:
+        return "starting code the agent extends"
+    if suf in {"csv", "tsv"}:
+        return "the raw data the agent reads"
+    if suf == "json":
+        return "structured data (JSON) the agent reads"
+    return "a file the agent reads"
+
+
+def inline_task_inputs(task_id: str) -> str:
+    """Render every fixture the task hands the agent as *input* — the files dropped into its
+    project next to the prompt, which it reads but does not author. Markdown briefs render as
+    formatted docs; data/code files render as collapsible, size-capped blocks; images inline.
+    This is the agent's input, not its output. Generic across tasks."""
     d = resolve_task_dir(task_id)
     fx = (d / "fixtures") if d else None
     if not fx or not fx.is_dir():
         return ""
-    blocks = []
+    docs, files, images = [], [], []
     for p in sorted(fx.iterdir()):
-        if p.suffix.lower() != ".md" or not p.is_file():
+        if not p.is_file():
             continue
-        try:
-            md = p.read_text()
-        except Exception:  # noqa: BLE001
-            continue
-        blocks.append(
-            f'<figure class="doc"><figcaption>{esc(p.name)} — {esc(_doc_label(p.name))}</figcaption>'
-            f'<div class="docbody">{_md_to_html(md)}</div></figure>'
-        )
+        suf = p.suffix.lower()
+        if suf == ".md":
+            try:
+                docs.append(
+                    f'<figure class="doc"><figcaption>{esc(p.name)} — input: {esc(_doc_label(p.name))}</figcaption>'
+                    f'<div class="docbody">{_md_to_html(p.read_text())}</div></figure>'
+                )
+            except Exception:  # noqa: BLE001
+                pass
+        elif suf in _IMG_MIME:
+            try:
+                raw = p.read_bytes()
+            except Exception:  # noqa: BLE001
+                continue
+            if len(raw) > 800_000:  # keep the page light
+                continue
+            b64 = base64.b64encode(raw).decode()
+            images.append(
+                f'<figure class="attach"><figcaption>{esc(p.name)} — input: the agent must open and '
+                f'interpret this</figcaption><img src="data:{_IMG_MIME[suf]};base64,{b64}" alt="{esc(p.name)}"/></figure>'
+            )
+        elif suf in _CODE_EXT:
+            try:
+                text = p.read_text()
+            except Exception:  # noqa: BLE001
+                continue
+            lines = text.splitlines()
+            shown = "\n".join(lines[:80])
+            if len(lines) > 80 or len(shown) > 8000:
+                shown = shown[:8000].rstrip() + f"\n… [{len(lines)} lines total — truncated]"
+            files.append(
+                f'<figure class="doc"><details class="infile"><summary>{esc(p.name)} — input: '
+                f'{esc(_file_label(p.name))}</summary><pre>{esc(shown)}</pre></details></figure>'
+            )
+    blocks = docs + files + images
     if not blocks:
         return ""
-    return ('<p class="mcaption muted">Handed to the agent alongside the prompt — not pasted into '
-            'it. The agent has to open these and work from them:</p>' + "".join(blocks))
+    return ('<p class="inlabel">Files in the agent\'s project</p>'
+            '<p class="mcaption muted">Dropped in next to the prompt — the agent reads these as '
+            'input; it doesn\'t create them.</p>' + "".join(blocks))
 
 
 def _read_result(run_path: str) -> dict[str, Any]:
@@ -796,9 +809,17 @@ SHARED_CSS = """
   .ask .step:last-child { border-bottom:0; }
   .ask .steplabel { font-size:.62rem; text-transform:uppercase; letter-spacing:.08em; color:var(--text-4); font-weight:700; margin-bottom:.5rem; }
   .ask pre { margin:0; white-space:pre-wrap; word-break:break-word; font:.84rem/1.65 var(--mono); color:var(--text-2); }
+  .inlabel { font-family:var(--sans); font-size:.66rem; font-weight:700; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--text-3); margin:1.6rem 0 .5rem; }
   .attach { margin:1rem 0 0; }
   .attach img { display:block; max-width:100%; border:1px solid var(--border); border-radius:4px; }
-  .attach figcaption { font-size:.72rem; color:var(--text-4); margin-top:.45rem; font-family:var(--sans); }
+  .attach figcaption { font-size:.72rem; color:var(--text-4); margin:0 0 .5rem; font-family:var(--sans); }
+  .infile { border:1px solid var(--border); border-radius:4px; background:var(--bg-raised); }
+  .infile summary { cursor:pointer; padding:.55rem .85rem; font-family:var(--sans); font-size:.76rem; color:var(--text-3); }
+  .infile summary:hover { color:var(--text-1); }
+  .infile[open] summary { border-bottom:1px solid var(--border-sub); }
+  .infile pre { margin:0; padding:.7rem .9rem .9rem; white-space:pre-wrap; word-break:break-word;
+    font:.76rem/1.55 var(--mono); color:var(--text-2); overflow-x:auto; }
   .doc { margin:1rem 0 0; }
   .doc figcaption { font-size:.72rem; color:var(--text-4); margin:0 0 .5rem; font-family:var(--sans); }
   .docbody { border:1px solid var(--border); border-radius:4px; padding:1.1rem 1.3rem; background:var(--bg-raised);
@@ -1215,11 +1236,12 @@ def _detail_inner(task_id, task_meta, rows_for_task, models) -> str:
     <p class="runline">solved by <b>{solved} of {len(rows_for_task)}</b> models</p>
   </header>
 
-  <h2>The goal</h2>
-  <p class="mcaption muted">Exactly what the agent was given — no answer key, no hints.</p>
+  <h2>The input</h2>
+  <p class="mcaption muted">Everything the agent was handed — the user's prompt plus the files in
+    its project, and nothing more. No answer key, no hints.</p>
+  <p class="inlabel">The user's prompt</p>
   <div class="ask">{ask_html}</div>
-  {inline_task_docs(task_id)}
-  {inline_task_images(task_id)}
+  {inline_task_inputs(task_id)}
 
   <h2>The answer key</h2>
   <div class="key">
