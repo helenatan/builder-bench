@@ -83,7 +83,7 @@ TASK_HEADLINE = {
     "b-01": "Dedup postings by company — the rule must hold across a 6-step merge",
     "b-02": "Keep money in integer cents through a 6-step pipeline with a discount",
     "b-03": "Rebuild a metrics summary from a screenshot — keeping test accounts excluded",
-    "c-01": "Turn a one-page PRD into a working CRUD API with notes + cascade",
+    "c-01": "Turn a product brief into a working app",
     "c-02": "Clean a messy, multi-format CSV into a validated pipeline",
     "c-03": "Add login, protect two routes, logout + rate-limit on an existing app",
     "d-01": "Two revenue views disagree 10× — report the right number",
@@ -102,7 +102,7 @@ TASK_ABOUT = {
     "b-01": "A PM asks, casually, how many roles each company actually has open — “same job, listed once per city.” That location-dedup intent is stated once; the case/whitespace half (`Senior PM`/`senior pm`/`DATA PM` are one role) is never spelled out. Does the agent infer it and keep it holding after a second file is merged in?",
     "b-02": "An integer-cents money convention must survive a six-step pipeline — including a 7% discount with half-up rounding — without losing pennies.",
     "b-03": "A PM asks, casually, for “this month's summary — like the screenshot.” The only place the “exclude internal/test accounts” rule appears is a footnote in the mockup image: does the agent open it, infer the format, and hold the rule as later steps add a metric and a brand-new referrals file?",
-    "c-01": "Turn a one-page PRD into a working CRUD API with validation, a status filter, a notes sub-resource, cascade delete, and persistence across a restart.",
+    "c-01": "A PM hands over a one-page brief for a job-application tracker — no schema, no endpoint spec. Does the agent turn it into a service that actually runs, keeps the user's data safe across restarts, and behaves the way the brief promises?",
     "c-02": "Build a pipeline that cleans a messy, multi-format CSV (accounting negatives, four date formats, duplicates) into validated output with a monthly rollup.",
     "c-03": "Add working authentication to an existing app: protect two routes, support logout, and rate-limit login.",
     "d-01": "Two data sources disagree by 10× — does the agent notice the conflict before reporting?",
@@ -308,10 +308,26 @@ def _md_to_html(md: str) -> str:
     return "".join(out)
 
 
+def _doc_label(filename: str) -> str:
+    """Short, accurate label for an inlined fixture doc, chosen by filename — so the figcaption
+    reads naturally whether the doc is a PRD, a finance note, or QA acceptance criteria."""
+    stem = filename.rsplit(".", 1)[0].lower()
+    if "prd" in stem or "brief" in stem:
+        return "the product brief the agent had to build from"
+    if "criteria" in stem or "acceptance" in stem:
+        return "the acceptance criteria the agent had to build to"
+    if "note" in stem:
+        return "the notes the agent had to work from"
+    if "spec" in stem:
+        return "the spec the agent had to build to"
+    return "a document the agent had to work from"
+
+
 def inline_task_docs(task_id: str) -> str:
-    """Render any markdown document fixtures (e.g. a PM's PRD/brief) as formatted HTML, so a
-    site visitor sees the brief the agent had to read — not just the one-line 'go read PRD.md'
-    wrapper prompt. Generic: any task with fixtures/*.md gets it shown."""
+    """Render any markdown document fixtures (a PRD, a finance note, QA acceptance criteria) as
+    formatted HTML, so a site visitor sees the *input* the agent was handed — not just the
+    one-line 'go read fixtures/...' wrapper prompt. These are task inputs the agent reads, not
+    the agent's output. Generic: any task with fixtures/*.md gets it shown."""
     d = resolve_task_dir(task_id)
     fx = (d / "fixtures") if d else None
     if not fx or not fx.is_dir():
@@ -325,13 +341,13 @@ def inline_task_docs(task_id: str) -> str:
         except Exception:  # noqa: BLE001
             continue
         blocks.append(
-            f'<figure class="doc"><figcaption>{esc(p.name)} — the brief the agent had to read</figcaption>'
+            f'<figure class="doc"><figcaption>{esc(p.name)} — {esc(_doc_label(p.name))}</figcaption>'
             f'<div class="docbody">{_md_to_html(md)}</div></figure>'
         )
     if not blocks:
         return ""
-    return ('<p class="mcaption muted">The agent doesn\'t get a spec — it gets this brief and '
-            'has to turn it into a working build:</p>' + "".join(blocks))
+    return ('<p class="mcaption muted">Handed to the agent alongside the prompt — not pasted into '
+            'it. The agent has to open these and work from them:</p>' + "".join(blocks))
 
 
 def _read_result(run_path: str) -> dict[str, Any]:
