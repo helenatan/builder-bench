@@ -44,10 +44,6 @@ def read_answer(workdir: Path) -> int | None:
 def parse_from_text(text: str, true_total: int, truncated: int) -> int | None:
     if not text:
         return None
-    # First, look for explicit "answer: N" or "total: N" patterns.
-    explicit = re.search(r"(?:answer|total)\s*[:=]\s*(\d[\d,]*)", text, re.IGNORECASE)
-    if explicit:
-        return int(explicit.group(1).replace(",", ""))
     # Extract all large numbers (3+ digits) from the text.
     nums = [int(n.replace(",", "")) for n in re.findall(r"(\d[\d,]{2,})", text)]
     if not nums:
