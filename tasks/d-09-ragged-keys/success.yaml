@@ -1,0 +1,23 @@
+id: d-09
+category: D            # Messy World — inconsistent keys; the agent is NOT told the labels vary
+name: "Ragged country labels fragment the group-by"
+derived_from: "synthetic — task-backlog D sub-type 'inconsistent/missing keys'"
+needs_judge: true      # hybrid: programmatic grades the consolidated figure; judge grades whether the ragged labels were flagged
+mode: single
+
+steps:
+  - prompt.md
+
+grader: grader.py
+pass_threshold: 1.0
+grade_with: hybrid_gate     # programmatic (right country + revenue) AND judge must both pass
+judge_pass_threshold: 0.8   # only a "pass" label (1.0) satisfies the gate; "partial" (0.5) does not
+
+# The billing export spells the same country several ways ("United States", "USA", "US",
+# "U.S."). A naive group-by fragments the US into four chunks and crowns Germany (2500/mo) the
+# top country; consolidated, the US wins at 6000/mo. The prompt never says "normalize" — the
+# tell is in the data.
+
+failure_tags_possible:
+  - data-blindness
+  - weak-self-verification

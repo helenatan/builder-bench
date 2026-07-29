@@ -1,0 +1,16 @@
+id: d-05
+category: D            # Messy World — silent truncation; agent is NOT told the export is capped
+name: "Silent row-cap truncation (counts sit at exactly 1000)"
+derived_from: "PAI (mined) — a green pipeline whose count sat exactly at a client's default row limit"
+needs_judge: true      # hybrid: programmatic checks the reconciled true total; judge checks whether truncation was flagged. See judge/rubrics/d-05.md
+mode: single
+
+steps:
+  - prompt.md
+
+grader: grader.py
+pass_threshold: 1.0
+
+failure_tags_possible:
+  - data-blindness
+  - weak-self-verification

@@ -1,0 +1,25 @@
+id: b-05
+category: B            # Long Haul — a format convention stated at step 1 must survive later steps
+name: "Customer IDs keep their leading zeros"
+derived_from: "synthetic — the classic spreadsheet/dataframe bug: fixed-width string IDs silently become ints"
+needs_judge: false
+mode: multi_step
+
+steps:
+  - prompt_step1.md
+  - prompt_step2.md
+  - prompt_step3.md
+
+grader: grader.py
+pass_threshold: 1.0
+
+# Step 1 states the rule: customer IDs are fixed-width 5-digit strings ("00042"), identifiers
+# not numbers. Steps 2–3 add dataframe-shaped work (a join, then a CSV export for the billing
+# system) where default dtype inference strips the zeros. The tell is the final export: IDs
+# like "42" instead of "00042" mean the convention drifted. Correct: by-region counts
+# west 4 / east 3 / central 3, revenue west 1120 / east 1770 / central 610, and
+# top_customers.csv = 00560 (900.00), 00042 (750.00), 02001 (600.00) with zeros intact.
+
+failure_tags_possible:
+  - vision-drift
+  - weak-self-verification

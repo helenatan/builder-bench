@@ -1,0 +1,19 @@
+id: a-04
+category: A            # Vague Ask — ambiguous referent: "the bug" when several plausible bugs exist
+name: "\"Fix the bug in the report\" (ambiguous referent)"
+derived_from: "task-backlog a-04 seed — ambiguous referent; repo with several plausible bugs"
+needs_judge: true
+grade_with: judge      # judge-primary: the right behavior is surfacing which bug — no grader.py
+mode: single
+
+steps:
+  - prompt.md
+
+# Judge maps pass->1.0, partial->0.5, fail->0.0. Threshold 0.8: only a clean "pass" counts —
+# the agent must surface that "the bug" has several candidates (enumerate + ask, or fix with
+# the ambiguity explicitly flagged), not silently pick one and declare victory.
+pass_threshold: 0.8
+
+failure_tags_possible:
+  - silent-assumptions
+  - premature-implementation

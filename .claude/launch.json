@@ -1,0 +1,9 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "leaderboard", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "8731", "--directory", "results"], "port": 8731 },
+    { "name": "site", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "8732", "--directory", "public"], "port": 8732 },
+    { "name": "label-review", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "judge.validation.review", "--port", "8765"], "port": 8765 },
+    { "name": "labeling-site", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "8733", "--directory", "private/labeling-site"], "port": 8733 }
+  ]
+}

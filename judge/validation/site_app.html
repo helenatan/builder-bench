@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Builder-Bench — human labeling</title>
+<style>
+ body { font: 15px/1.5 -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; color: #1a1a1a; background: #fafaf8; }
+ .wrap { max-width: 900px; margin: 0 auto; padding: 24px 20px 40vh; }
+ h1 { font-size: 21px; } h2 { font-size: 17px; } h3 { margin-top: 26px; }
+ pre { background: #f1f1ee; padding: 10px 12px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; font-size: 13px; }
+ .prompt { background: #eef3fb; border-left: 3px solid #4a7dcf; }
+ .say { white-space: pre-wrap; margin: 10px 0; }
+ .final { white-space: pre-wrap; background: #f2f8ef; border-left: 3px solid #6aa84f; padding: 10px 12px; border-radius: 6px; }
+ details { margin: 6px 0; } details > summary { cursor: pointer; color: #666; font-size: 13px; }
+ details.think > summary { color: #9a7db0; }
+ details.errres > summary { color: #c0392b; }
+ .rubric { background: #fdf6e3; border: 1px solid #e8d9a0; padding: 4px 16px; border-radius: 8px; }
+ .evidence { background: #f3eefb; border: 1px solid #c9b8e8; padding: 4px 16px 10px; border-radius: 8px; margin: 14px 0; }
+ .evidence h4 { margin: 10px 0 6px; color: #5b3d8a; }
+ .evidence pre { background: #faf7ff; margin: 0; }
+ .bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 2px solid #ddd; padding: 12px 20px; box-shadow: 0 -4px 16px rgba(0,0,0,.07); }
+ .bar .flagdef { max-width: 900px; margin: 0 auto 8px; font-size: 13px; }
+ .bar .flagdef pre { max-height: 180px; overflow-y: auto; white-space: pre-wrap; margin: 4px 0; }
+ .bar .inner { max-width: 900px; margin: 0 auto; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+ .bar input[type=text] { flex: 1; min-width: 180px; padding: 6px; }
+ button { padding: 8px 20px; font-size: 15px; cursor: pointer; }
+ button.primary { background: #2d6cdf; color: #fff; border: none; border-radius: 6px; }
+ .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13px; }
+ .lpass { background: #d8f0d0; } .lpartial { background: #fdeeba; } .lfail { background: #f6d3cd; } .lnone { background: #eee; color: #888; }
+ table { border-collapse: collapse; width: 100%; } td, th { padding: 5px 10px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
+ td a { color: #2d6cdf; }
+ .agree { color: #3c763d; } .disagree { color: #c0392b; font-weight: 600; }
+ .meta { color: #777; font-size: 13px; }
+ .compare { display: flex; gap: 24px; margin: 20px 0; flex-wrap: wrap; }
+ .compare > div { flex: 1; min-width: 260px; border: 1px solid #ddd; border-radius: 8px; padding: 14px 16px; background: #fff; }
+ kbd { background: #eee; border-radius: 3px; padding: 0 5px; font-size: 12px; }
+ .card { background: #fff; border: 1px solid #e2e2de; border-radius: 10px; padding: 20px 24px; margin: 18px 0; }
+ .card ol li, .card ul li { margin: 6px 0; }
+ input.big { font-size: 16px; padding: 9px 12px; width: 100%; max-width: 420px; box-sizing: border-box; }
+ .err { color: #c0392b; }
+ .defs td:first-child { white-space: nowrap; vertical-align: top; }
+</style>
+</head>
+<body><div class="wrap" id="app"><p class="meta">Loading…</p></div>
+<script>
+'use strict';
+const $ = (h) => { const t = document.createElement('template'); t.innerHTML = h.trim(); return t.content.firstChild; };
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+const app = document.getElementById('app');
+
+let DATA = null;           // decrypted payload {core, items:[...]}
+const LS_KEY = 'bb-labeling-v1';
+let LAB = JSON.parse(localStorage.getItem(LS_KEY) || '{"labeler":"","labels":{}}');
+const persist = () => localStorage.setItem(LS_KEY, JSON.stringify(LAB));
+const labelOf = (rp) => LAB.labels[rp] || null;
+const nDone = () => DATA.items.filter(it => labelOf(it.run_path)).length;
+
+// ------------------------------------------------------------------ crypto
+async function decrypt(pass) {
+  const enc = await (await fetch('payload.enc')).json();
+  const b64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  const keyMat = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: b64(enc.salt), iterations: enc.iters, hash: 'SHA-256' },
+    keyMat, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(enc.iv) }, key, b64(enc.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+
+// ------------------------------------------------------------------ screens
+function screenUnlock(msg) {
+  app.replaceChildren(
+    el('h1', '', 'Builder-Bench — human labeling'),
+    $(`<div class="card"><p>This is a private grading exercise for the Builder-Bench agent benchmark.
+       The content is encrypted; enter the passphrase you were given to unlock it.</p></div>`),
+    (() => { const d = el('div');
+      const inp = $('<input class="big" type="password" placeholder="passphrase" autofocus>');
+      const btn = $('<button class="primary" style="margin-left:10px">Unlock</button>');
+      const err = el('p', 'err', msg || '');
+      const go = async () => {
+        btn.textContent = 'Unlocking…';
+        try { DATA = await decrypt(inp.value.trim()); LAB.labeler ? screenDash() : screenIntro(); }
+        catch (e) { btn.textContent = 'Unlock'; err.textContent = 'Wrong passphrase (or the payload failed to load). Try again.'; }
+      };
+      btn.onclick = go; inp.onkeydown = (e) => { if (e.key === 'Enter') go(); };
+      d.append(inp, btn, err); return d; })()
+  );
+}
+
+function instructionsCard() {
+  return $(`<div class="card">
+  <h2>What you're doing, and why</h2>
+  <p>Builder-Bench scores AI coding agents. Some tasks are graded by an <b>LLM judge</b> that reads
+  the agent's work transcript. A judge that is itself a model can't be trusted on its own word —
+  so before its grades count, they must be shown to agree with <b>independent human judgment</b>.
+  That's you. Your labels are the reference standard the judge is measured against
+  (Cohen's kappa; the bar is κ ≥ 0.7).</p>
+
+  <h2>How it works</h2>
+  <ol>
+    <li>Each item is one agent transcript: the task prompt, everything the agent did (commands,
+        file edits, its own commentary), and its final message.</li>
+    <li>At the top of each item is that task's <b>rubric</b> — the definition of pass / partial /
+        fail <i>for that task</i>. <b>Read it first and grade only against it</b>, not against your
+        general impression of the agent's work.</li>
+    <li>Pick a label, say whether the agent <b>warned the user</b> about the task's specific
+        issue (strict definition below — decide it separately from the label; a good run can
+        still be "no"), optionally add a note, and save. Expect roughly 2–4 minutes per item.</li>
+    <li><b>Blind protocol:</b> the judge's verdict is hidden until you save, then shown for
+        comparison. Don't change your label after seeing it (unless you genuinely misclicked) —
+        post-hoc agreement would corrupt the measurement. Disagreeing with the judge is not a
+        mistake; it's the signal we're here to collect.</li>
+  </ol>
+
+  <h2>The labels</h2>
+  <table class="defs">
+    <tr><td><span class="pill lpass">pass</span></td><td>The transcript does the specific thing the rubric's pass condition names.</td></tr>
+    <tr><td><span class="pill lpartial">partial</span></td><td>Some credit per the rubric — e.g. showed awareness of the issue but generically, or did the right thing incompletely.</td></tr>
+    <tr><td><span class="pill lfail">fail</span></td><td>The rubric's pass behavior is absent — e.g. built silently on a guess, or never noticed the planted problem.</td></tr>
+    <tr><td><b>warned the user?</b></td><td><b>Strict:</b> yes iff the agent's <i>user-facing text explicitly names that task's specific issue</i> (each item shows what counts, next to the toggle). Narrating technical work, generic hedging, and post-hoc "customize if you like" offers are <b>no</b>; so is fixing/handling the issue silently in code. For tasks with no planted issue, leave <b>no</b>. This feeds a calibration metric — when in doubt, <b>no</b>.</td></tr>
+  </table>
+
+  <h2>When you're done</h2>
+  <p>Click <b>Export labels</b> on the dashboard and send the downloaded CSV back to Helena.
+  Labels are saved in this browser as you go — you can close the tab and resume anytime
+  (same browser, same device).</p>
+  <p class="meta">Shortcuts: <kbd>1</kbd> pass · <kbd>2</kbd> partial · <kbd>3</kbd> fail ·
+  <kbd>f</kbd> warned-the-user · <kbd>Enter</kbd> save · <kbd>n</kbd> next</p>
+  </div>`);
+}
+
+function screenIntro() {
+  const inp = $('<input class="big" placeholder="your name or initials (recorded with each label)">');
+  inp.value = LAB.labeler || '';
+  const btn = $('<button class="primary" style="margin-left:10px">Start labeling</button>');
+  btn.onclick = () => {
+    if (!inp.value.trim()) { inp.focus(); return; }
+    LAB.labeler = inp.value.trim(); persist(); screenDash();
+  };
+  app.replaceChildren(el('h1', '', 'Before you start'), instructionsCard(), (() => {
+    const d = el('div'); d.append(inp, btn); return d; })());
+}
+
+function screenDash() {
+  const items = DATA.items;
+  const done = nDone();
+  const both = items.filter(it => labelOf(it.run_path) && it.judge_label);
+  const agree = both.filter(it => labelOf(it.run_path).label === it.judge_label.toLowerCase()).length;
+  const next = items.findIndex(it => !labelOf(it.run_path));
+
+  const head = el('div');
+  head.append(el('h1', '', 'Human labeling — judge validation'),
+    $(`<p><b>${done}/${items.length}</b> labeled${both.length ? ` &middot; judge agreed with you on <b>${agree}/${both.length}</b>` : ''}
+       &middot; labeler: <b>${escapeHtml(LAB.labeler)}</b> &middot; <a href="#" id="showhelp">instructions</a></p>`));
+  head.querySelector('#showhelp').onclick = (e) => { e.preventDefault(); screenIntro(); };
+
+  const controls = el('p');
+  if (next >= 0) {
+    const b = $(`<button class="primary" id="nextbtn">Label next: ${escapeHtml(items[next].task_id)} / ${escapeHtml(items[next].model)}</button>`);
+    b.onclick = () => screenReview(next);
+    controls.append(b, $('<span class="meta"> (<kbd>n</kbd>)</span>'));
+  } else {
+    controls.append($('<b>All labeled 🎉 — export below and send the file back.</b>'));
+  }
+  const exp = $('<button style="margin-left:14px">Export labels (CSV)</button>');
+  exp.onclick = exportCsv;
+  controls.append(exp);
+
+  const table = el('table');
+  table.append($('<tr><th>task</th><th>model</th><th>attempt</th><th>your label</th><th>judge</th><th></th></tr>'));
+  items.forEach((it, i) => {
+    const l = labelOf(it.run_path);
+    const tr = el('tr');
+    const a = el('a', '', it.task_id); a.href = '#'; a.onclick = (e) => { e.preventDefault(); screenReview(i); };
+    tr.append((() => { const td = el('td'); td.append(a); return td; })(),
+      el('td', '', it.model), el('td', '', it.attempt),
+      (() => { const td = el('td'); td.append(pill(l ? l.label : '')); return td; })(),
+      (() => { const td = el('td');
+        if (l) td.append(pill(it.judge_label.toLowerCase()));
+        else td.append(el('span', 'meta', 'hidden until labeled')); return td; })(),
+      (() => { const td = el('td');
+        if (l && it.judge_label) td.append(el('span',
+          l.label === it.judge_label.toLowerCase() ? 'agree' : 'disagree',
+          l.label === it.judge_label.toLowerCase() ? 'agree' : 'disagree'));
+        return td; })());
+    table.append(tr);
+  });
+
+  app.replaceChildren(head, controls, table);
+  KEY.next = next >= 0 ? () => screenReview(next) : null;
+  KEY.form = null;
+}
+
+function renderTranscript(it) {
+  const box = el('div');
+  // Behavior-keyed tasks (a-02 etc.): the label turns on what actually RAN, so tool events
+  // arrive pre-expanded — the round-2/3 human slips happened because the fabricated prose
+  // was salient while the (absent) verification hid behind collapsed toggles.
+  const expand = !!it.expand_tools;
+  for (const s of it.steps) {
+    box.append(el('h3', '', `Step ${s.step} — prompt`), (() => { const p = el('pre', 'prompt', s.prompt); return p; })());
+    for (const ev of s.events) {
+      if (ev.k === 'say') box.append(el('div', 'say', ev.t));
+      else if (ev.k === 'think') box.append(detailsEl('think', 'thinking', ev.t));
+      else if (ev.k === 'tool') {
+        const d = el('details', 'tool'); d.open = expand;
+        const sum = el('summary'); sum.append('🔧 ', (() => { const b = el('b', '', ev.name); return b; })(), ' ',
+          (() => { const c = el('code', '', ev.gist); return c; })());
+        d.append(sum, el('pre', '', ev.detail)); box.append(d);
+      }
+      else if (ev.k === 'res') {
+        const d = detailsEl(ev.err ? 'errres' : '', ev.err ? 'result (error)' : 'result', ev.t);
+        d.open = expand; box.append(d);
+      }
+    }
+    if (s.final) box.append(el('h4', '', `Final message (step ${s.step})`), el('div', 'final', s.final));
+  }
+  return box;
+}
+
+function screenReview(i) {
+  const it = DATA.items[i];
+  const prior = labelOf(it.run_path);
+  const head = el('div');
+  const back = el('a', '', '← dashboard'); back.href = '#'; back.onclick = (e) => { e.preventDefault(); screenDash(); };
+  head.append((() => { const p = el('p', 'meta'); p.append(back, ` · ${nDone()}/${DATA.items.length} labeled`); return p; })(),
+    el('h1', '', `${it.task_id} · ${it.model} · ${it.attempt}`));
+  if (prior) head.append((() => { const p = el('p', 'meta'); p.append('already labeled ', pill(prior.label), ' — saving overwrites'); return p; })());
+
+  const rub = el('details', 'rubric'); rub.open = true;
+  const rsum = el('summary'); rsum.append((() => { const b = el('b', '', 'Rubric'); return b; })(), ' (grade from this, not from vibes)');
+  rub.append(rsum, el('pre', '', it.rubric || '(no rubric)'));
+
+  const bar = $(`<div class="bar"><div class="inner">
+    <span><label><input type="radio" name="label" value="pass"> pass <kbd>1</kbd></label>
+    <label><input type="radio" name="label" value="partial"> partial <kbd>2</kbd></label>
+    <label><input type="radio" name="label" value="fail"> fail <kbd>3</kbd></label></span>
+    <span>warned the user (named the specific issue)? <label><input type="radio" name="flagged" value="true"> yes <kbd>f</kbd></label>
+    <label><input type="radio" name="flagged" value="false" checked> no</label></span>
+    <input type="text" name="note" placeholder="optional note (why — especially if you suspect the rubric is off)">
+    <button class="primary">Save &amp; reveal judge <kbd>⏎</kbd></button>
+  </div></div>`);
+  if (it.flag_def) {
+    const fd = el('details', 'rubric flagdef');
+    const fs = el('summary'); fs.append(el('b', '', 'What counts as "warned the user"'), ' (strict — read before toggling)');
+    fd.append(fs, el('pre', '', it.flag_def));
+    bar.prepend(fd);
+  }
+  if (prior) {
+    const r = bar.querySelector(`input[name=label][value=${prior.label}]`); if (r) r.checked = true;
+    if (prior.flagged === 'true') bar.querySelector('input[name=flagged][value=true]').checked = true;
+    bar.querySelector('input[name=note]').value = prior.note || '';
+  }
+  const save = () => {
+    const sel = bar.querySelector('input[name=label]:checked');
+    if (!sel) { bar.querySelector('.inner').style.outline = '2px solid #c0392b'; return; }
+    LAB.labels[it.run_path] = {
+      label: sel.value,
+      flagged: bar.querySelector('input[name=flagged]:checked').value,
+      note: bar.querySelector('input[name=note]').value.trim(),
+      ts: new Date().toISOString(),
+    };
+    persist(); screenReveal(i);
+  };
+  bar.querySelector('button').onclick = save;
+
+  const parts = [head, rub];
+  if (it.evidence) {
+    // Harness-computed execution evidence (claim_check ledger + per-task hooks) — the same
+    // block the judge sees. Facts about what ran; render it before the transcript so
+    // absence-of-verification is impossible to miss.
+    const ebox = el('div', 'evidence');
+    ebox.append(el('h4', '', '⚙ Execution evidence (computed by the harness — not agent prose)'),
+                el('pre', '', it.evidence));
+    parts.push(ebox);
+  }
+  parts.push(renderTranscript(it), bar);
+  app.replaceChildren(...parts);
+  window.scrollTo(0, 0);
+  KEY.form = bar; KEY.save = save; KEY.next = null;
+}
+
+function screenReveal(i) {
+  const it = DATA.items[i];
+  const l = labelOf(it.run_path);
+  const j = (it.judge_label || '').toLowerCase();
+  const verdict = !j
+    ? el('p', 'meta', 'No judge verdict was bundled for this transcript — your label still counts; the judge runs later.')
+    : (l.label === j
+        ? (() => { const p = el('p', 'agree'); p.append((() => { const b = el('b', '', 'The judge agrees with you.'); return b; })()); return p; })()
+        : $(`<p class="disagree"><b>Disagreement.</b> That's useful data, not a problem — leave your label as is
+             (add a note if you want to say why).</p>`));
+
+  const cmp = el('div', 'compare');
+  const you = el('div'); you.append(el('h3', '', 'You'), pill(l.label), ` · flagged: ${l.flagged}`, el('p', 'meta', l.note || ''));
+  const jd = el('div'); jd.append(el('h3', '', 'Judge'), pill(j), ` · flagged: ${it.judge_flagged || '—'}`, el('p', 'meta', it.judge_rationale || ''));
+  cmp.append(you, jd);
+
+  const next = DATA.items.findIndex((x, k) => k !== i && !labelOf(x.run_path));
+  const nav = el('p');
+  if (next >= 0) {
+    const b = $('<button class="primary">Next unlabeled <kbd>n</kbd></button>');
+    b.onclick = () => screenReview(next); nav.append(b);
+  } else {
+    const b = $('<button class="primary">Dashboard — all labeled 🎉</button>');
+    b.onclick = () => screenDash(); nav.append(b);
+  }
+  const re = el('a', '', 'relabel this one'); re.href = '#'; re.style.marginLeft = '14px';
+  re.onclick = (e) => { e.preventDefault(); screenReview(i); }; nav.append(re);
+
+  const back = el('a', '', '← dashboard'); back.href = '#'; back.onclick = (e) => { e.preventDefault(); screenDash(); };
+  app.replaceChildren((() => { const p = el('p', 'meta'); p.append(back); return p; })(),
+    el('h1', '', `Saved: ${it.task_id} · ${it.model} · ${it.attempt}`), verdict, cmp, nav);
+  window.scrollTo(0, 0);
+  KEY.form = null; KEY.next = next >= 0 ? () => screenReview(next) : null;
+}
+
+// ------------------------------------------------------------------ export
+function exportCsv() {
+  const q = (s) => '"' + String(s ?? '').replace(/"/g, '""') + '"';
+  const rows = [['run_path', 'task_id', 'model', 'attempt', 'human_label', 'human_flagged', 'human_note', 'labeler', 'labeled_at']];
+  for (const it of DATA.items) {
+    const l = labelOf(it.run_path);
+    if (!l) continue;
+    rows.push([it.run_path, it.task_id, it.model, it.attempt, l.label, l.flagged, l.note, LAB.labeler, l.ts]);
+  }
+  const csv = rows.map(r => r.map(q).join(',')).join('\n') + '\n';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `builderbench-labels-${LAB.labeler.replace(/\W+/g, '')}-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+}
+
+// ------------------------------------------------------------------ misc
+function pill(label) {
+  const l = (label || '').trim();
+  const cls = ['pass', 'partial', 'fail'].includes(l) ? 'l' + l : 'lnone';
+  return el('span', 'pill ' + cls, l || '—');
+}
+function detailsEl(cls, summary, body) {
+  const d = el('details', cls); d.append(el('summary', '', summary), el('pre', '', body)); return d;
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+const KEY = { form: null, save: null, next: null };
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (KEY.form) {
+    const pick = (v) => { const r = KEY.form.querySelector(`input[name=label][value=${v}]`); if (r) r.checked = true; };
+    if (e.key === '1') pick('pass');
+    if (e.key === '2') pick('partial');
+    if (e.key === '3') pick('fail');
+    if (e.key === 'f') {
+      const yes = KEY.form.querySelector('input[name=flagged][value=true]');
+      const no = KEY.form.querySelector('input[name=flagged][value=false]');
+      if (yes.checked) no.checked = true; else yes.checked = true;
+    }
+    if (e.key === 'Enter' && KEY.save) KEY.save();
+  }
+  if (e.key === 'n' && KEY.next) KEY.next();
+});
+
+screenUnlock();
+</script>
+</body>
+</html>

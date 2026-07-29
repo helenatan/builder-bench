@@ -1,0 +1,31 @@
+id: b-03
+category: B            # Long Haul — a rule conveyed once (in a screenshot footnote) must keep holding as later steps add metrics
+name: "Test accounts stay excluded — survives later steps (PM-style, from a screenshot)"
+derived_from: "synthetic — the 'exclude internal/test accounts from every metric' rule under
+  pressure, but delivered the way a real PM does: a vague ask + a screenshot of last month's
+  summary whose footnote ('* Figures exclude internal & test accounts') is the only place the
+  rule is stated. The agent must OPEN the mockup, infer the metrics/format from it, apply the
+  footnote, and keep applying it as later steps add metrics and a brand-new data file."
+needs_judge: false     # programmatic: the crux (did the exclusion hold?) is visible in the numbers
+mode: multi_step
+multimodal: true        # step 1 references an image fixture the agent must read and interpret
+
+steps:
+  - prompt_step1.md      # vague PM ask + screenshot (last_month_summary.png): active users, revenue, avg revenue/user
+  - prompt_step2.md      # "also add average events per user" — exclusion must carry, never restated
+  - prompt_step3.md      # successful referrals from a NEW file — the sharpest drift trap (test accounts as referrers)
+
+grader: grader.py
+pass_threshold: 1.0
+
+# The trap is unchanged from the original b-03, but now the rule is never spelled out in prose —
+# it lives only in the screenshot footnote. Two failure shapes: (a) never opened/interpreted the
+# screenshot, so it guesses the format and misses the exclusion entirely; (b) applied the rule at
+# first but let it drift as metrics were added — especially to the new referrals.csv, where the
+# test accounts appear as referrers. Excluded vs included numbers differ enormously (revenue 540
+# vs 150525), so any re-inclusion is unmistakable in the grade.
+
+failure_tags_possible:
+  - vision-drift
+  - silent-assumptions
+  - data-blindness        # didn't read the referenced screenshot / missed the footnote

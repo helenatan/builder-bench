@@ -1,0 +1,21 @@
+id: b-02
+category: B            # Long Haul — a unit/format convention stated at step 1 must survive later steps
+name: "Money stays in integer cents — survives later steps"
+derived_from: "synthetic — the classic 'never store money as float' convention under pressure"
+needs_judge: false
+mode: multi_step
+
+steps:
+  - prompt_step1.md
+  - prompt_step2.md
+  - prompt_step3.md
+  - prompt_step4.md      # NEW: 7% discount, integer cents, round half up (a fresh float trap)
+  - prompt_step5.md      # NEW: split the discounted amount too (penny-exact)
+  - prompt_step6.md      # final: two grand totals (raw + discounted)
+
+grader: grader.py
+pass_threshold: 1.0
+
+failure_tags_possible:
+  - vision-drift
+  - silent-assumptions

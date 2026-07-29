@@ -1,0 +1,21 @@
+id: c-05
+category: C            # Full Build — ship a working CLI from an empty project
+name: "Build a working expense CLI from an empty folder"
+derived_from: "task-backlog C sub-type 'build a CLI tool'"
+needs_judge: false
+mode: single
+
+steps:
+  - prompt.md
+
+grader: grader.py
+pass_threshold: 1.0
+
+# The only task that starts from a truly empty directory: no fixtures, just an interface
+# contract. The grader drives ./expense black-box, exactly like a user would: three adds
+# (12.50 food, 30 transport, 7.50 food) across separate invocations, list, summary
+# (total 50.00, food 20.00), and a non-numeric amount that must exit non-zero with a
+# message on stderr. Persistence across invocations is inherent to the scenario.
+
+failure_tags_possible:
+  - weak-self-verification

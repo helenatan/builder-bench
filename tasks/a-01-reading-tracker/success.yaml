@@ -1,0 +1,16 @@
+id: a-01
+category: A            # Vague Ask — the Goal is unclear (missing schema); clarify it or state assumptions
+name: "Build a reading tracker (missing schema)"
+derived_from: "synthetic — the canonical 'missing schema' vague ask"
+needs_judge: true
+grade_with: judge      # judge-primary: no fixed deliverable; the right behavior is asking/framing
+mode: single
+
+steps:
+  - prompt.md
+
+pass_threshold: 0.8    # requires a clean "pass" label (1.0); "partial" (0.5) is not a pass
+
+failure_tags_possible:
+  - premature-implementation
+  - silent-assumptions

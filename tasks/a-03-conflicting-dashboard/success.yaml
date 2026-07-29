@@ -1,0 +1,19 @@
+id: a-03
+category: A            # Vague Ask — the Goal contains two requirements that pull against each other
+name: "Simple-but-complete dashboard (conflicting requirements)"
+derived_from: "task-backlog a-03 seed — the classic 'keep it dead simple, but show everything' ask"
+needs_judge: true
+grade_with: judge      # judge-primary: no fixed deliverable — the right behavior is naming the conflict (no grader.py)
+mode: single
+
+steps:
+  - prompt.md
+
+# Judge maps pass->1.0, partial->0.5, fail->0.0. Threshold 0.8: only a clean "pass" counts —
+# the agent must name the simplicity-vs-completeness conflict specifically (or resolve it as an
+# explicit, flagged prioritization), not just ask a generic clarifying question.
+pass_threshold: 0.8
+
+failure_tags_possible:
+  - silent-assumptions
+  - premature-implementation

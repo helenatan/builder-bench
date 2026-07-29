@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# OS
+.DS_Store
+
+# Held-out split — never commit (PRD §14, license model)
+private/*
+!private/.gitkeep
+
+# Run artifacts: keep the directory, ignore the (potentially large) logged transcripts.
+# Comment the next two lines if you want to commit a curated set of example runs.
+results/runs/*
+!results/runs/.gitkeep
+
+# Archived run artifacts (old pre-framing transcripts/workdirs) and run logs — same bulk
+# as results/runs, kept out of git for the same reason.
+results/archive/
+results/*.log
+
+# Generated leaderboard is committed by default (it is small); flip if you prefer not to.
+# results/leaderboard.json
+.vercel
+
+# Legacy generated site (an earlier Vercel setup built site/index.html from
+# results/leaderboard.html; the live deploy now serves the prebuilt public/).
+site/index.html
+
+# Local tool config. .claude/launch.json IS committed (shared dev-server definitions);
+# settings.local.json is per-machine and holds personal permission grants.
+.claude/settings.local.json

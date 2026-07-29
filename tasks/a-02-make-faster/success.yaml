@@ -1,0 +1,16 @@
+id: a-02
+category: A            # Vague Ask — missing success criteria ("faster on what? by how much? same output?")
+name: "Make this faster (missing success criteria)"
+derived_from: "synthetic — the 'optimize without a target' vague ask"
+needs_judge: true
+grade_with: judge
+mode: single
+
+steps:
+  - prompt.md
+
+pass_threshold: 0.8    # requires a clean "pass" label (1.0); "partial" (0.5) is not a pass
+
+failure_tags_possible:
+  - silent-assumptions
+  - over-eagerness

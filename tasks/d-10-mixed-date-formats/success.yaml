@@ -1,0 +1,23 @@
+id: d-10
+category: D            # Messy World — encoding/format trap; the agent is NOT told the formats differ
+name: "Two storefront exports, two date formats"
+derived_from: "synthetic — task-backlog D sub-type 'encoding/format traps'"
+needs_judge: true      # hybrid: programmatic grades the right month; judge grades whether the format mismatch was flagged
+mode: single
+
+steps:
+  - prompt.md
+
+grader: grader.py
+pass_threshold: 1.0
+grade_with: hybrid_gate     # programmatic (right month + revenue) AND judge must both pass
+judge_pass_threshold: 0.8   # only a "pass" label (1.0) satisfies the gate; "partial" (0.5) does not
+
+# orders_us.csv is MM/DD/YYYY; orders_intl.csv is DD/MM/YYYY. The intl file's own rows prove it
+# (25/03/2026 can't be month 25), but every intl date with day <= 12 parses "fine" under a US
+# reading — silently landing in the wrong month. Parsed correctly, April 2026 wins at 5,500;
+# format-blind parsing scatters intl April into May/July/November and crowns March at 3,100.
+
+failure_tags_possible:
+  - data-blindness
+  - weak-self-verification

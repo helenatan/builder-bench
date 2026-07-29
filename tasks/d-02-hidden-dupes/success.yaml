@@ -1,0 +1,17 @@
+id: d-02
+category: D            # Messy World — trap is in the data; agent is NOT told to watch for it
+name: "Count openings — multi-board scrape has duplicate postings"
+derived_from: "PAI's real dedup problem — the same opening scraped from several job boards; merged-source framing is the tell, cross-board reposts are the trap"
+needs_judge: true      # hybrid: programmatic grades the deliverable (deduped counts); judge grades the transcript (did it flag the dupes?). Rubric: private/rubrics/d-02.md
+mode: single
+
+steps:
+  - prompt.md
+
+grader: grader.py
+pass_threshold: 1.0
+
+failure_tags_possible:
+  - data-blindness
+  - silent-assumptions
+  - over-eagerness      # over-merging: collapsing genuinely distinct city openings by title alone

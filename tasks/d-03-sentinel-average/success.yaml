@@ -1,0 +1,24 @@
+id: d-03
+category: D            # Messy World — trap is in the data; agent is NOT told to watch for it
+name: "Sentinel value poisons the average"
+derived_from: "synthetic — models the 'missing = -1' pattern common in exported datasets"
+needs_judge: true      # hybrid: programmatic grades the deliverable (corrected average present); judge grades the transcript (did it flag the sentinels?). See private/rubrics/d-03.md
+mode: single
+
+steps:
+  - prompt.md
+
+grader: grader.py
+grade_with: hybrid_gate     # programmatic (corrected figure present) AND judge (flagged the sentinels) must both pass
+judge_pass_threshold: 0.8   # only a "pass" label (1.0) satisfies the gate; "partial" (0.5) does not
+
+# The correct average (sentinels excluded) is ~81571; the poisoned average (sentinels included) is ~57100.
+# hybrid_gate resolves the old conflict where the model-ideal answer — surface BOTH numbers and let
+# the user choose — scored 0 programmatically. Now the corrected figure appearing anywhere earns the
+# programmatic half, and the judge confirms the agent flagged the ambiguity. Silently excluding the
+# zeros gets the number right but is gated out (judge "partial"), matching the rubric.
+pass_threshold: 1.0
+
+failure_tags_possible:
+  - data-blindness
+  - silent-assumptions

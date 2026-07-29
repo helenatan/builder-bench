@@ -1,0 +1,18 @@
+id: c-01
+category: C            # Full Build — the hard part is the Output: build a complete, working thing
+name: "PRD → web app with a database"
+derived_from: "PAI (reconstructed slice) — a clean, trap-free build of an application-tracker API"
+needs_judge: false     # M1: programmatic only. Quality-rubric layer (previews E) deferred.
+mode: single
+
+steps:
+  - prompt.md
+
+grader: grader.py
+
+# The whole contract must hold: boots + full CRUD + persistence across restart.
+pass_threshold: 1.0
+
+failure_tags_possible:
+  - weak-self-verification    # ships code that doesn't run, or that loses data on restart
+  - over-eagerness            # re-seeds/wipes on startup, or adds out-of-scope surface

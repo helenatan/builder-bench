@@ -1,0 +1,16 @@
+date,category,amount,note
+ 03/05/2026 ,Electronics,"$1,234.56",first sale
+2026-03-06,electronics ,$200.00,
+"March 7, 2026", Home ,$50.00,
+03/08/2026,Home,"$1,000.00",bulk
+,Garden,$10.00,missing date - drop me
+03/09/2026,,$20.00,missing category - drop me
+03/10/2026,Garden,,missing amount - drop me
+2026-03-11,GARDEN,$5.50,
+ 03/12/2026,electronics,"$3,000.00 ",big
+"March 13, 2026",home,$0.99,
+7-Mar-2026,Garden,($50.00),refund (accounting negative)
+15-Mar-2026,Electronics,-$25.00,price adjustment
+03/05/2026,Electronics,"$1,234.56",exact duplicate of first - drop me
+2026-03-08,home,"$1,000.00",duplicate of bulk - drop me
+04/02/2026,Electronics,$100.00,april sale

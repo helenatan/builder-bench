@@ -1,0 +1,19 @@
+id: a-05
+category: A            # Vague Ask — the Goal is unclear; the agent must clarify it or state assumptions
+name: "Show how PM jobs are changing (underspecified)"
+derived_from: "the pattern of PAI's founding ask (representative, not verbatim — see docs/pai-transcript-evidence.md)"
+needs_judge: true
+grade_with: judge      # judge-primary: there's no deliverable to check — the right behavior is asking/framing (no grader.py)
+mode: single
+
+steps:
+  - prompt.md
+
+# Judge maps pass->1.0, partial->0.5, fail->0.0. Threshold 0.5 so a clear partial (raised one
+# ambiguity OR stated assumptions and built something reasonable) counts as a pass.
+pass_threshold: 0.5
+
+failure_tags_possible:
+  - silent-assumptions
+  - premature-implementation
+  - data-blindness

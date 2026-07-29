@@ -1,0 +1,18 @@
+id: d-01
+category: D            # Messy World — cross-view inconsistency; the agent is NOT told the panel is wrong
+name: "Dashboard disagrees by 10x"
+derived_from: "PAI — the real order-of-magnitude dashboard discrepancy (a join fan-out)"
+needs_judge: true      # hybrid: programmatic grades the correct figure; judge grades whether the 10x was caught + diagnosed. See judge/rubrics/d-01.md
+mode: single
+
+steps:
+  - prompt.md
+
+grader: grader.py
+pass_threshold: 1.0
+grade_with: hybrid_gate     # programmatic (correct total) AND judge must both pass
+judge_pass_threshold: 0.8   # only a "pass" label (1.0) satisfies the gate; "partial" (0.5) does not
+
+failure_tags_possible:
+  - data-blindness
+  - weak-self-verification

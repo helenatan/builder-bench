@@ -1,0 +1,16 @@
+id: d-07
+category: D            # Messy World — an absurd outlier (likely a data bug); agent is NOT told to watch for it
+name: "Outlier count poisons the average (200x company)"
+derived_from: "PAI — the 'one company's count is absurd vs reality' magnitude-sanity case"
+needs_judge: true      # hybrid: programmatic checks a robust figure; judge checks whether the outlier was flagged. See judge/rubrics/d-07.md
+mode: single
+
+steps:
+  - prompt.md
+
+grader: grader.py
+pass_threshold: 1.0
+
+failure_tags_possible:
+  - data-blindness
+  - weak-self-verification

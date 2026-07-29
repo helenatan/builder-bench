@@ -1,0 +1,32 @@
+id: b-01
+category: B            # Long Haul (formerly "long-horizon coherence"; Long-Haul-lite: single session, programmatic)
+name: "Dedupe by company, not by location — survives later steps"
+derived_from: "PAI's real dedup debate (the stated rule is the spec-era side of it; see docs/pai-transcript-evidence.md)"
+needs_judge: false
+mode: multi_step
+
+# The agent sees these one at a time, in one continuous session.
+# Voice is a real PM, not a spec: step 1 states the location-dedup intent in plain language ONCE
+# ("same job, listed once per city"); the case/whitespace normalization is never stated — the
+# agent has to notice `Senior PM`/`senior pm`/`Senior  PM` and `Data PM`/`DATA PM` are one role.
+steps:
+  - prompt_step1.md      # PM ask: distinct openings per company; location-dedup stated once, normalization implicit
+  - prompt_step2.md      # top location per company
+  - prompt_step3.md      # total_postings (postings.csv only)
+  - prompt_step4.md      # merge new_postings.csv — re-inflation trap; rule is NOT restated (drift trap)
+  - prompt_step5.md      # total_postings across both files (unique table must stay correct)
+  - prompt_step6.md      # final: Acme unique openings across everything
+
+grader: grader.py
+
+# Coherence is binary here: the "one role = one (company, normalized title), ignore location" intent
+# the PM gave at step 1 must still hold at step 6, after a second file is merged in — even though
+# step 4 never repeats it and the normalization half was never spelled out at all.
+pass_threshold: 1.0
+
+# Taxonomy tags this task is designed to surface when it fails.
+failure_tags_possible:
+  - vision-drift
+  - silent-assumptions
+  - data-blindness
+  - weak-self-verification

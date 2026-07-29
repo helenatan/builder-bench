@@ -1,0 +1,25 @@
+id: b-04
+category: B            # Long Haul — a definition set at step 1 must survive later steps
+name: "\"Active customer\" definition survives a fuller export"
+derived_from: "synthetic — task-backlog B sub-type 'a definition set at step 1 that downstream steps must respect'"
+needs_judge: false
+mode: multi_step
+
+steps:
+  - prompt_step1.md
+  - prompt_step2.md
+  - prompt_step3.md
+
+grader: grader.py
+pass_threshold: 1.0
+
+# Step 1 pins the definition: active = purchased 2026-05-02..2026-06-30 (a fixed window, not
+# "recently"). Step 3 swaps in purchases_full.csv — two years of history, no new rows inside the
+# window — and asks for an all-time revenue figure. The tempting drift: with the fuller file in
+# hand, "active" quietly becomes "appears in the file" (12 customers) instead of the pinned
+# window (5). Correct: active_customers=5, active_by_plan={basic:2,pro:3},
+# active_customer_revenue_alltime=1300.00.
+
+failure_tags_possible:
+  - vision-drift
+  - weak-self-verification
