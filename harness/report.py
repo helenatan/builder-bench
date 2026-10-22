@@ -798,11 +798,19 @@ DRAWER_SCRIPT = """<script>
 </script>"""
 
 
+WRITEUP_URL = "https://helenatan.substack.com/p/agent-eval-for-claude-code-on-pm-1ac"
+CREATOR_URL = "https://www.linkedin.com/in/helenatan/"
+
+
 def _site_header(logo_href: str = "#") -> str:
     return (
         '<div class="site-header"><div class="header-inner">'
         f'<a class="site-logo" href="{logo_href}">Builder-Bench</a>'
         '<div class="header-actions">'
+        '<nav class="header-nav" aria-label="About">'
+        f'<a href="{WRITEUP_URL}" target="_blank" rel="noopener">Read the writeup</a>'
+        f'<a href="{CREATOR_URL}" target="_blank" rel="noopener">Contact creator</a>'
+        '</nav>'
         '<a class="theme-toggle" href="https://github.com/helenatan/builder-bench" '
         'target="_blank" rel="noopener">GitHub ↗</a>'
         '<button class="theme-toggle" onclick="window.__toggleTheme()" aria-label="Toggle theme">'
@@ -853,6 +861,11 @@ SHARED_CSS = """
     max-width:1000px; margin:0 auto; padding:0 1.75rem; }
   .site-logo { font-family:var(--serif); font-weight:700; font-size:.95rem; color:var(--text-1); }
   .header-actions { display:flex; align-items:center; gap:.5rem; }
+  .header-nav { display:flex; align-items:center; gap:1.35rem; margin-right:.85rem;
+    padding-right:1.1rem; border-right:1px solid var(--border); }
+  .header-nav a { white-space:nowrap; font-family:var(--serif); font-style:italic; font-size:.84rem; color:var(--text-2);
+    border-bottom:1px solid transparent; padding-bottom:1px; transition:color .15s, border-color .15s; }
+  .header-nav a:hover { color:var(--accent); border-bottom-color:var(--accent); }
   .theme-toggle { display:inline-flex; align-items:center; gap:.4rem; background:transparent;
     border:1px solid var(--border); border-radius:2px; color:var(--text-2); cursor:pointer;
     font-family:var(--sans); font-size:.68rem; font-weight:600; letter-spacing:.06em;
@@ -1038,7 +1051,11 @@ SHARED_CSS = """
   .mblock b { color:var(--text-2); }
   @media (max-width:680px) {
     .wrap { padding:0 1.25rem 3.5rem; }
-    .header-inner { padding:0 1.25rem; }
+    .header-inner { padding:0 1.25rem; flex-wrap:wrap; column-gap:.5rem; row-gap:.5rem; }
+    .header-actions { display:contents; }
+    .header-nav { order:2; flex-basis:100%; margin-right:0; padding:.5rem 0 0; border-right:0;
+      border-top:1px solid var(--border-sub); gap:1.25rem; }
+    .header-nav + .theme-toggle { margin-left:auto; }
     h1 { font-size:1.875rem; }
     .sub { font-size:1rem; }
     .method { grid-template-columns:1fr; }
@@ -1385,8 +1402,8 @@ def render_dashboard(rows: list[dict[str, Any]]) -> str:
   </div>
 
   <footer>
-    <p class="credit">Built by <a href="https://www.linkedin.com/in/helenatan/" target="_blank" rel="noopener">Helena Tan</a></p>
-    <p>Generated {esc(datetime.now().strftime("%B %-d, %Y"))}.</p>
+    <p class="credit">Built by <a href="{CREATOR_URL}" target="_blank" rel="noopener">Helena Tan</a></p>
+    <p>Updated {esc(datetime.now().strftime("%B %-d, %Y"))}.</p>
   </footer>
 
 </div>
@@ -1513,7 +1530,7 @@ def render_detail(task_id, task_meta, rows_for_task, models, dashboard_name) -> 
     verdict, plus the judge's behavioral read where the task is judge- or hybrid-graded. Score is the
     best of this task's attempts (0–1). See the
     <a class="back" style="margin:0" href="../{esc(dashboard_name)}">full leaderboard</a> for all the tasks.</p>
-    <p class="credit">Built by <a href="https://www.linkedin.com/in/helenatan/" target="_blank" rel="noopener">Helena Tan</a></p>
+    <p class="credit">Built by <a href="{CREATOR_URL}" target="_blank" rel="noopener">Helena Tan</a></p>
   </footer>
 
 </div></body></html>"""

@@ -63,6 +63,11 @@
     max-width:1000px; margin:0 auto; padding:0 1.75rem; }
   .site-logo { font-family:var(--serif); font-weight:700; font-size:.95rem; color:var(--text-1); }
   .header-actions { display:flex; align-items:center; gap:.5rem; }
+  .header-nav { display:flex; align-items:center; gap:1.35rem; margin-right:.85rem;
+    padding-right:1.1rem; border-right:1px solid var(--border); }
+  .header-nav a { white-space:nowrap; font-family:var(--serif); font-style:italic; font-size:.84rem; color:var(--text-2);
+    border-bottom:1px solid transparent; padding-bottom:1px; transition:color .15s, border-color .15s; }
+  .header-nav a:hover { color:var(--accent); border-bottom-color:var(--accent); }
   .theme-toggle { display:inline-flex; align-items:center; gap:.4rem; background:transparent;
     border:1px solid var(--border); border-radius:2px; color:var(--text-2); cursor:pointer;
     font-family:var(--sans); font-size:.68rem; font-weight:600; letter-spacing:.06em;
@@ -248,7 +253,11 @@
   .mblock b { color:var(--text-2); }
   @media (max-width:680px) {
     .wrap { padding:0 1.25rem 3.5rem; }
-    .header-inner { padding:0 1.25rem; }
+    .header-inner { padding:0 1.25rem; flex-wrap:wrap; column-gap:.5rem; row-gap:.5rem; }
+    .header-actions { display:contents; }
+    .header-nav { order:2; flex-basis:100%; margin-right:0; padding:.5rem 0 0; border-right:0;
+      border-top:1px solid var(--border-sub); gap:1.25rem; }
+    .header-nav + .theme-toggle { margin-left:auto; }
     h1 { font-size:1.875rem; }
     .sub { font-size:1rem; }
     .method { grid-template-columns:1fr; }
@@ -283,7 +292,7 @@
     font:.78rem/1.65 var(--mono); color:var(--text-3); }
 </style>
 </head><body>
-<div class="site-header"><div class="header-inner"><a class="site-logo" href="../index.html">Builder-Bench</a><div class="header-actions"><a class="theme-toggle" href="https://github.com/helenatan/builder-bench" target="_blank" rel="noopener">GitHub ↗</a><button class="theme-toggle" onclick="window.__toggleTheme()" aria-label="Toggle theme"><span id="themeLabel">Dark</span></button></div></div></div>
+<div class="site-header"><div class="header-inner"><a class="site-logo" href="../index.html">Builder-Bench</a><div class="header-actions"><nav class="header-nav" aria-label="About"><a href="https://helenatan.substack.com/p/agent-eval-for-claude-code-on-pm-1ac" target="_blank" rel="noopener">Read the writeup</a><a href="https://www.linkedin.com/in/helenatan/" target="_blank" rel="noopener">Contact creator</a></nav><a class="theme-toggle" href="https://github.com/helenatan/builder-bench" target="_blank" rel="noopener">GitHub ↗</a><button class="theme-toggle" onclick="window.__toggleTheme()" aria-label="Toggle theme"><span id="themeLabel">Dark</span></button></div></div></div>
 <div class="wrap">
 
   <a class="back" href="../index.html">← Builder-Bench leaderboard</a>
