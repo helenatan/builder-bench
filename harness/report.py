@@ -805,14 +805,15 @@ CREATOR_URL = "https://www.linkedin.com/in/helenatan/"
 def _site_header(logo_href: str = "#") -> str:
     return (
         '<div class="site-header"><div class="header-inner">'
+        '<div class="masthead">'
         f'<a class="site-logo" href="{logo_href}">Builder-Bench</a>'
+        f'<a class="byline" href="{CREATOR_URL}" target="_blank" rel="noopener">by Helena Tan ↗</a>'
+        '</div>'
         '<div class="header-actions">'
-        '<nav class="header-nav" aria-label="About">'
-        f'<a href="{WRITEUP_URL}" target="_blank" rel="noopener">Read the writeup</a>'
-        f'<a href="{CREATOR_URL}" target="_blank" rel="noopener">Contact creator</a>'
+        '<nav class="header-nav" aria-label="Elsewhere">'
+        f'<a class="lead" href="{WRITEUP_URL}" target="_blank" rel="noopener">The writeup ↗</a>'
+        '<a href="https://github.com/helenatan/builder-bench" target="_blank" rel="noopener">GitHub ↗</a>'
         '</nav>'
-        '<a class="theme-toggle" href="https://github.com/helenatan/builder-bench" '
-        'target="_blank" rel="noopener">GitHub ↗</a>'
         '<button class="theme-toggle" onclick="window.__toggleTheme()" aria-label="Toggle theme">'
         '<span id="themeLabel">Dark</span></button>'
         '</div>'
@@ -859,13 +860,18 @@ SHARED_CSS = """
   .site-header { border-bottom:1px solid var(--border-sub); padding:.6rem 0; transition:border-color .2s; }
   .header-inner { display:flex; align-items:center; justify-content:space-between;
     max-width:1000px; margin:0 auto; padding:0 1.75rem; }
+  .masthead { display:flex; align-items:baseline; gap:.6rem; min-width:0; }
   .site-logo { font-family:var(--serif); font-weight:700; font-size:.95rem; color:var(--text-1); }
+  .byline { white-space:nowrap; font-family:var(--serif); font-style:italic; font-size:.8rem;
+    color:var(--text-3); transition:color .15s; }
+  .byline:hover { color:var(--accent); }
   .header-actions { display:flex; align-items:center; gap:.5rem; }
   .header-nav { display:flex; align-items:center; gap:1.35rem; margin-right:.85rem;
     padding-right:1.1rem; border-right:1px solid var(--border); }
   .header-nav a { white-space:nowrap; font-family:var(--serif); font-style:italic; font-size:.84rem; color:var(--text-2);
     border-bottom:1px solid transparent; padding-bottom:1px; transition:color .15s, border-color .15s; }
   .header-nav a:hover { color:var(--accent); border-bottom-color:var(--accent); }
+  .header-nav a.lead { color:var(--text-1); border-bottom-color:var(--accent); }
   .theme-toggle { display:inline-flex; align-items:center; gap:.4rem; background:transparent;
     border:1px solid var(--border); border-radius:2px; color:var(--text-2); cursor:pointer;
     font-family:var(--sans); font-size:.68rem; font-weight:600; letter-spacing:.06em;
@@ -875,7 +881,7 @@ SHARED_CSS = """
   .wrap { max-width:1000px; margin:0 auto; padding:0 1.75rem 4.5rem; }
   header.hero { margin-bottom:2.5rem; }
   h1 { font-family:var(--serif); margin:2.25rem 0 .6rem; font-size:2.5rem; font-weight:700;
-    letter-spacing:-.015em; line-height:1.12; max-width:20ch; }
+    letter-spacing:-.015em; line-height:1.12; max-width:20ch; text-wrap:balance; }
   .aboutlabel { font-family:var(--sans); font-size:.66rem; font-weight:700; letter-spacing:.1em;
     text-transform:uppercase; color:var(--text-3); margin:0 0 .5rem; }
   .sub { color:var(--text-2); margin:0; max-width:64ch; font-size:1.0625rem; line-height:1.6; }
@@ -1297,9 +1303,9 @@ def render_dashboard(rows: list[dict[str, Any]]) -> str:
 <div class="wrap">
 
   <header class="hero">
-    <h1>Builder-Bench</h1>
-    <p class="sub">Builder-Bench measures how well coding agents take a product manager's rough
-       request into the working thing they actually meant.</p>
+    <h1>Which coding agent builds what the PM actually meant?</h1>
+    <p class="sub">Builder-Bench hands coding agents the rough requests product managers really
+       write, then checks whether what comes back is the working thing they meant.</p>
     <p class="runline">Last run <b>{esc(run_date)}</b> · <b>{n_tasks} test cases</b> · <b>{len(models)} Claude models</b>
        across {len({m['tier'] for m in models})} tiers · one neutral harness ·
        <a href="#methodology" style="color:var(--accent2)">how it works ↓</a></p>

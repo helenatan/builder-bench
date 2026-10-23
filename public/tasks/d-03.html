@@ -61,13 +61,18 @@
   .site-header { border-bottom:1px solid var(--border-sub); padding:.6rem 0; transition:border-color .2s; }
   .header-inner { display:flex; align-items:center; justify-content:space-between;
     max-width:1000px; margin:0 auto; padding:0 1.75rem; }
+  .masthead { display:flex; align-items:baseline; gap:.6rem; min-width:0; }
   .site-logo { font-family:var(--serif); font-weight:700; font-size:.95rem; color:var(--text-1); }
+  .byline { white-space:nowrap; font-family:var(--serif); font-style:italic; font-size:.8rem;
+    color:var(--text-3); transition:color .15s; }
+  .byline:hover { color:var(--accent); }
   .header-actions { display:flex; align-items:center; gap:.5rem; }
   .header-nav { display:flex; align-items:center; gap:1.35rem; margin-right:.85rem;
     padding-right:1.1rem; border-right:1px solid var(--border); }
   .header-nav a { white-space:nowrap; font-family:var(--serif); font-style:italic; font-size:.84rem; color:var(--text-2);
     border-bottom:1px solid transparent; padding-bottom:1px; transition:color .15s, border-color .15s; }
   .header-nav a:hover { color:var(--accent); border-bottom-color:var(--accent); }
+  .header-nav a.lead { color:var(--text-1); border-bottom-color:var(--accent); }
   .theme-toggle { display:inline-flex; align-items:center; gap:.4rem; background:transparent;
     border:1px solid var(--border); border-radius:2px; color:var(--text-2); cursor:pointer;
     font-family:var(--sans); font-size:.68rem; font-weight:600; letter-spacing:.06em;
@@ -77,7 +82,7 @@
   .wrap { max-width:1000px; margin:0 auto; padding:0 1.75rem 4.5rem; }
   header.hero { margin-bottom:2.5rem; }
   h1 { font-family:var(--serif); margin:2.25rem 0 .6rem; font-size:2.5rem; font-weight:700;
-    letter-spacing:-.015em; line-height:1.12; max-width:20ch; }
+    letter-spacing:-.015em; line-height:1.12; max-width:20ch; text-wrap:balance; }
   .aboutlabel { font-family:var(--sans); font-size:.66rem; font-weight:700; letter-spacing:.1em;
     text-transform:uppercase; color:var(--text-3); margin:0 0 .5rem; }
   .sub { color:var(--text-2); margin:0; max-width:64ch; font-size:1.0625rem; line-height:1.6; }
@@ -292,7 +297,7 @@
     font:.78rem/1.65 var(--mono); color:var(--text-3); }
 </style>
 </head><body>
-<div class="site-header"><div class="header-inner"><a class="site-logo" href="../index.html">Builder-Bench</a><div class="header-actions"><nav class="header-nav" aria-label="About"><a href="https://helenatan.substack.com/p/agent-eval-for-claude-code-on-pm-1ac" target="_blank" rel="noopener">Read the writeup</a><a href="https://www.linkedin.com/in/helenatan/" target="_blank" rel="noopener">Contact creator</a></nav><a class="theme-toggle" href="https://github.com/helenatan/builder-bench" target="_blank" rel="noopener">GitHub ↗</a><button class="theme-toggle" onclick="window.__toggleTheme()" aria-label="Toggle theme"><span id="themeLabel">Dark</span></button></div></div></div>
+<div class="site-header"><div class="header-inner"><div class="masthead"><a class="site-logo" href="../index.html">Builder-Bench</a><a class="byline" href="https://www.linkedin.com/in/helenatan/" target="_blank" rel="noopener">by Helena Tan ↗</a></div><div class="header-actions"><nav class="header-nav" aria-label="Elsewhere"><a class="lead" href="https://helenatan.substack.com/p/agent-eval-for-claude-code-on-pm-1ac" target="_blank" rel="noopener">The writeup ↗</a><a href="https://github.com/helenatan/builder-bench" target="_blank" rel="noopener">GitHub ↗</a></nav><button class="theme-toggle" onclick="window.__toggleTheme()" aria-label="Toggle theme"><span id="themeLabel">Dark</span></button></div></div></div>
 <div class="wrap">
 
   <a class="back" href="../index.html">← Builder-Bench leaderboard</a>
