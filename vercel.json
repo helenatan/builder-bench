@@ -18,11 +18,11 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "/projects/builder-bench/index.html"
+      "destination": "/projects/builder-bench"
     },
     {
       "source": "/tasks/:id",
-      "destination": "/projects/builder-bench/tasks/:id.html"
+      "destination": "/projects/builder-bench/tasks/:id"
     }
   ]
 }
