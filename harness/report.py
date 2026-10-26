@@ -817,6 +817,25 @@ def _href(path: str) -> str:
     return (BASE + path).removesuffix(".html").rstrip("/")
 
 
+def _credit() -> str:
+    """The "Built by" line, for local previews only. On the deployed site the
+    helenatan.ai footer says who made it, along with the date and links."""
+    if BASE:
+        return ""
+    return f'\n    <p class="credit">Built by <a href="{CREATOR_URL}">Helena Tan</a></p>'
+
+
+def _local_footer() -> str:
+    """The leaderboard's own footer, for local previews only."""
+    if BASE:
+        return ""
+    updated = esc(datetime.now().strftime("%B %-d, %Y"))
+    return f"""  <footer>{_credit()}
+    <p>Updated {updated}.</p>
+  </footer>
+"""
+
+
 def _site_tags(page: str) -> str:
     """Canonical link and the helenatan.ai frame, only on the deployed site."""
     if not BASE:
@@ -1009,10 +1028,10 @@ SHARED_CSS = """
   .matkey .km.pass { color:var(--up); }
   .matkey .km.fail { color:var(--accent); }
   .matkey i { font-style:italic; }
-  footer { margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--border);
+  footer, .page-note { margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--border);
     color:var(--text-4); font-size:.8rem; line-height:1.7; }
-  footer p { margin:0 0 .5rem; }
-  footer code { font-family:var(--mono); color:var(--text-3); }
+  footer p, .page-note p { margin:0 0 .5rem; }
+  footer code, .page-note code { font-family:var(--mono); color:var(--text-3); }
   .credit { font-family:var(--serif); font-size:1rem; color:var(--text-1); }
   .credit a { color:var(--accent); }
   .credit a:hover { text-decoration:underline; }
@@ -1433,11 +1452,7 @@ def render_dashboard(rows: list[dict[str, Any]]) -> str:
     </div>
   </div>
 
-  <footer>
-    <p class="credit">Built by <a href="{CREATOR_URL}">Helena Tan</a></p>
-    <p>Updated {esc(datetime.now().strftime("%B %-d, %Y"))}.</p>
-  </footer>
-
+{_local_footer()}
 </div>
 {drawer}
 {DRAWER_SCRIPT.replace("__BASE__", json.dumps(BASE)).replace("__EXT__", json.dumps("" if BASE else ".html"))}
@@ -1557,13 +1572,12 @@ def render_detail(task_id, task_meta, rows_for_task, models, dashboard_name) -> 
   <a class="back" href="{esc(_href("") or "../" + dashboard_name)}">← Builder-Bench leaderboard</a>
 {inner}
 
-  <footer>
+  <section class="page-note">
     <p>Each card shows the contestant (model), its <b>output</b>, and the <b>report</b> — the grader's
     verdict, plus the judge's behavioral read where the task is judge- or hybrid-graded. Score is the
     best of this task's attempts (0–1). See the
-    <a class="back" style="margin:0" href="{esc(_href("") or "../" + dashboard_name)}">full leaderboard</a> for all the tasks.</p>
-    <p class="credit">Built by <a href="{CREATOR_URL}">Helena Tan</a></p>
-  </footer>
+    <a class="back" style="margin:0" href="{esc(_href("") or "../" + dashboard_name)}">full leaderboard</a> for all the tasks.</p>{_credit()}
+  </section>
 
 </div></body></html>"""
 

@@ -186,10 +186,10 @@
   .matkey .km.pass { color:var(--up); }
   .matkey .km.fail { color:var(--accent); }
   .matkey i { font-style:italic; }
-  footer { margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--border);
+  footer, .page-note { margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--border);
     color:var(--text-4); font-size:.8rem; line-height:1.7; }
-  footer p { margin:0 0 .5rem; }
-  footer code { font-family:var(--mono); color:var(--text-3); }
+  footer p, .page-note p { margin:0 0 .5rem; }
+  footer code, .page-note code { font-family:var(--mono); color:var(--text-3); }
   .credit { font-family:var(--serif); font-size:1rem; color:var(--text-1); }
   .credit a { color:var(--accent); }
   .credit a:hover { text-decoration:underline; }
@@ -557,12 +557,11 @@ Done. The active customer count and plan split are unchanged (the new rows are a
 `answer.json` has been updated with all three metrics.</pre></details>
       </div>
 
-  <footer>
+  <section class="page-note">
     <p>Each card shows the contestant (model), its <b>output</b>, and the <b>report</b> — the grader's
     verdict, plus the judge's behavioral read where the task is judge- or hybrid-graded. Score is the
     best of this task's attempts (0–1). See the
     <a class="back" style="margin:0" href="/projects/builder-bench">full leaderboard</a> for all the tasks.</p>
-    <p class="credit">Built by <a href="https://helenatan.ai/">Helena Tan</a></p>
-  </footer>
+  </section>
 
 </div></body></html>
