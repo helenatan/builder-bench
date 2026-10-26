@@ -712,12 +712,12 @@ THEME_SCRIPT = """<script>
   try{ saved=localStorage.getItem(KEY); }catch(e){}
   var dark = saved ? saved==='dark'
     : (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
-  if(dark) document.documentElement.setAttribute('data-theme','dark');
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
   function lbl(){ var l=document.getElementById('themeLabel');
     if(l) l.textContent = document.documentElement.getAttribute('data-theme')==='dark' ? 'Light' : 'Dark'; }
   window.__toggleTheme=function(){
     var isD=document.documentElement.getAttribute('data-theme')==='dark';
-    if(isD){ document.documentElement.removeAttribute('data-theme'); try{localStorage.setItem(KEY,'light');}catch(e){} }
+    if(isD){ document.documentElement.setAttribute('data-theme','light'); try{localStorage.setItem(KEY,'light');}catch(e){} }
     else{ document.documentElement.setAttribute('data-theme','dark'); try{localStorage.setItem(KEY,'dark');}catch(e){} }
     lbl();
   };
@@ -770,7 +770,7 @@ DRAWER_SCRIPT = """<script>
     lastFocus=document.activeElement;
     bodyEl.innerHTML='';
     bodyEl.appendChild(tpl.content.cloneNode(true));
-    if(full) full.href='tasks/'+id+'.html';
+    if(full) full.href=__BASE__+'tasks/'+id+__EXT__;
     document.body.classList.add('drawer-open');
     drawer.setAttribute('aria-hidden','false');
     drawer.scrollTop=0;
@@ -799,7 +799,33 @@ DRAWER_SCRIPT = """<script>
 
 
 WRITEUP_URL = "https://helenatan.substack.com/p/agent-eval-for-claude-code-on-pm-1ac"
-CREATOR_URL = "https://www.linkedin.com/in/helenatan/"
+CREATOR_URL = "https://helenatan.ai/"
+SITE_ORIGIN = "https://helenatan.ai"
+
+# Where the pages are served, as an absolute path ending in "/". Empty means
+# links stay relative, for local previews. The deployed site is served at
+# helenatan.ai/projects/builder-bench, so build-site.sh passes that path; it
+# also turns on the helenatan.ai frame and canonical links.
+BASE = ""
+
+
+def _href(path: str) -> str:
+    """A link to a page of this site, e.g. "tasks/a-01.html". On the deployed
+    site it drops ".html" and the trailing "/", matching Vercel's clean URLs."""
+    if not BASE:
+        return path
+    return (BASE + path).removesuffix(".html").rstrip("/")
+
+
+def _site_tags(page: str) -> str:
+    """Canonical link and the helenatan.ai frame, only on the deployed site."""
+    if not BASE:
+        return ""
+    url = SITE_ORIGIN + (BASE + page).rstrip("/")
+    return (
+        f'\n<link rel="canonical" href="{esc(url)}">'
+        '\n<script src="https://helenatan.ai/site-bar.js" data-current="builder-bench" defer></script>'
+    )
 
 
 def _site_header(logo_href: str = "#") -> str:
@@ -807,7 +833,7 @@ def _site_header(logo_href: str = "#") -> str:
         '<div class="site-header"><div class="header-inner">'
         '<div class="masthead">'
         f'<a class="site-logo" href="{logo_href}">Builder-Bench</a>'
-        f'<a class="byline" href="{CREATOR_URL}" target="_blank" rel="noopener">by Helena Tan ↗</a>'
+        f'<a class="byline" href="{CREATOR_URL}">by Helena Tan</a>'
         '</div>'
         '<div class="header-actions">'
         '<nav class="header-nav" aria-label="Elsewhere">'
@@ -1190,7 +1216,7 @@ def _matrix(task_ids, task_meta, model_ids, cell) -> str:
             body.append(f"""
       <tr class="{rowcls}">
         {catcell if i == 0 else ""}
-        <td class="task"><a class="tlink" href="tasks/{esc(t)}.html" data-task="{esc(t)}">
+        <td class="task"><a class="tlink" href="{esc(_href('tasks/' + t + '.html'))}" data-task="{esc(t)}">
           <span class="tname">{esc(t)}</span>
           <span class="tdesc">{esc(headline)} <span class="arrow">↗</span>{trap_chip}</span>
         </a></td>
@@ -1294,7 +1320,7 @@ def render_dashboard(rows: list[dict[str, Any]]) -> str:
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Builder-Bench · Leaderboard</title>
-{_meta_description("Builder-Bench measures how well coding agents (Claude Opus, Sonnet, Haiku) turn a product manager's rough request into the working thing they actually meant — PM-flavored tasks across four categories, programmatic graders, full answer keys published.")}{SITE_MARKERS}
+{_site_tags("")}{_meta_description("Builder-Bench measures how well coding agents (Claude Opus, Sonnet, Haiku) turn a product manager's rough request into the working thing they actually meant — PM-flavored tasks across four categories, programmatic graders, full answer keys published.")}{SITE_MARKERS}
 {SHARED_FONTS}
 {THEME_SCRIPT}
 <style>{SHARED_CSS}{DRAWER_CSS}</style>
@@ -1408,13 +1434,13 @@ def render_dashboard(rows: list[dict[str, Any]]) -> str:
   </div>
 
   <footer>
-    <p class="credit">Built by <a href="{CREATOR_URL}" target="_blank" rel="noopener">Helena Tan</a></p>
+    <p class="credit">Built by <a href="{CREATOR_URL}">Helena Tan</a></p>
     <p>Updated {esc(datetime.now().strftime("%B %-d, %Y"))}.</p>
   </footer>
 
 </div>
 {drawer}
-{DRAWER_SCRIPT}
+{DRAWER_SCRIPT.replace("__BASE__", json.dumps(BASE)).replace("__EXT__", json.dumps("" if BASE else ".html"))}
 </body></html>"""
 
 
@@ -1520,23 +1546,23 @@ def render_detail(task_id, task_meta, rows_for_task, models, dashboard_name) -> 
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(task_id)} · {esc(headline)} — Builder-Bench</title>
-{_meta_description(TASK_ABOUT.get(task_id, headline))}{SITE_MARKERS}
+{_site_tags("tasks/" + task_id)}{_meta_description(TASK_ABOUT.get(task_id, headline))}{SITE_MARKERS}
 {SHARED_FONTS}
 {THEME_SCRIPT}
 <style>{SHARED_CSS}</style>
 </head><body>
-{_site_header("../" + esc(dashboard_name))}
+{_site_header(esc(_href("") or "../" + dashboard_name))}
 <div class="wrap">
 
-  <a class="back" href="../{esc(dashboard_name)}">← Builder-Bench leaderboard</a>
+  <a class="back" href="{esc(_href("") or "../" + dashboard_name)}">← Builder-Bench leaderboard</a>
 {inner}
 
   <footer>
     <p>Each card shows the contestant (model), its <b>output</b>, and the <b>report</b> — the grader's
     verdict, plus the judge's behavioral read where the task is judge- or hybrid-graded. Score is the
     best of this task's attempts (0–1). See the
-    <a class="back" style="margin:0" href="../{esc(dashboard_name)}">full leaderboard</a> for all the tasks.</p>
-    <p class="credit">Built by <a href="{CREATOR_URL}" target="_blank" rel="noopener">Helena Tan</a></p>
+    <a class="back" style="margin:0" href="{esc(_href("") or "../" + dashboard_name)}">full leaderboard</a> for all the tasks.</p>
+    <p class="credit">Built by <a href="{CREATOR_URL}">Helena Tan</a></p>
   </footer>
 
 </div></body></html>"""
@@ -1546,7 +1572,10 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="builder-bench-report", description="Render the leaderboard site")
     p.add_argument("--out", default=str(OUT), help="output html path for the dashboard")
     p.add_argument("--open", action="store_true", help="open the dashboard in a browser when done")
+    p.add_argument("--base", default="", help='absolute path the site is served at, e.g. "/projects/builder-bench/" (default: relative links)')
     args = p.parse_args(argv)
+    global BASE
+    BASE = args.base
 
     rows = load_rows()
     if not rows:
